@@ -509,7 +509,7 @@ const PARTIDOS = [
 const EQUIPOS = [...new Set(PARTIDOS.flatMap(p=>[p.local,p.visitante]))].sort();
 const GRUPOS = [...new Set(PARTIDOS.map(p=>p.grupo))];
 
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzCO7ErC_3bHYpbYt1J21EbfZzrTueMvTyxeZg1x1YdtRhtNFSwz0-kByC3pT4_mUK0oQ/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxCEuzRU8qhW5RmJNPwxvo6sRmYzo16uByhHR6xraisWzMR4CjOKQHudAzKbpDrStKmHw/exec';
 
 let apuestas = [];
 let resultados = {};
@@ -556,12 +556,7 @@ async function doLogin() {
   if (!cel || !pass) { showAuthError('Completa todos los campos'); return; }
   setBtnLoading('btn-login', true, 'Ingresar →');
   try {
-    const res = await fetch(SHEET_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'login', celular: cel, password: pass })
-    });
-    const data = await res.json();
+    const data = await sheetCall({ action: 'login', celular: cel, password: pass });
     if (data.ok) {
       loginSuccess(data);
     } else {
@@ -583,12 +578,7 @@ async function doRegistro() {
   if (pass !== pass2) { showAuthError('Las contraseñas no coinciden'); return; }
   setBtnLoading('btn-reg', true, 'Crear cuenta →');
   try {
-    const res = await fetch(SHEET_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'registro', nombre: nom, celular: cel, password: pass })
-    });
-    const data = await res.json();
+    const data = await sheetCall({ action: 'registro', nombre: nom, celular: cel, password: pass });
     if (data.ok) {
       showAuthSuccess('✓ Cuenta creada. Ingresando...');
       setTimeout(() => loginSuccess(data), 1000);
@@ -640,12 +630,7 @@ async function renderUsuarios() {
   const container = document.getElementById('lista-usuarios');
   container.innerHTML = '<div class="empty">Cargando...</div>';
   try {
-    const res = await fetch(SHEET_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'get_usuarios' })
-    });
-    const data = await res.json();
+    const data = await sheetCall({ action: 'get_usuarios' });
     if (!data.ok || !data.usuarios.length) {
       container.innerHTML = '<div class="empty"><div class="empty-icon">👥</div>No hay usuarios registrados</div>';
       return;
@@ -678,14 +663,83 @@ async function eliminarUsuario(uid, nombre) {
 // ============================================================
 // GOOGLE SHEETS SYNC
 // ============================================================
-async function sheetPost(payload) {
+// Llamada GET via JSONP (evita CORS con Apps Script)
+function jsonpGet(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = 'cb_' + Date.now();
+    const script = document.createElement('script');
+    const timeout = setTimeout(() => {
+      delete window[cbName];
+      document.body.removeChild(script);
+      reject(new Error('Timeout'));
+    }, 15000);
+    window[cbName] = (data) => {
+      clearTimeout(timeout);
+      delete window[cbName];
+      document.body.removeChild(script);
+      resolve(data);
+    };
+    const qs = Object.entries({...params, callback: cbName})
+      .map(([k,v]) => k + '=' + encodeURIComponent(v)).join('&');
+    script.src = SHEET_URL + '?' + qs;
+    script.onerror = () => { clearTimeout(timeout); reject(new Error('Script error')); };
+    document.body.appendChild(script);
+  });
+}
+
+// Llamada POST via form+iframe (evita CORS con Apps Script)
+function iframePost(payload) {
+  return new Promise((resolve) => {
+    const iframeName = 'pf_' + Date.now();
+    const iframe = document.createElement('iframe');
+    iframe.name = iframeName;
+    iframe.style.display = 'none';
+    document.body.appendChild(iframe);
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = SHEET_URL;
+    form.target = iframeName;
+    const input = document.createElement('input');
+    input.type = 'hidden';
+    input.name = 'payload';
+    input.value = JSON.stringify(payload);
+    form.appendChild(input);
+    document.body.appendChild(form);
+    setTimeout(() => {
+      document.body.removeChild(form);
+      document.body.removeChild(iframe);
+      resolve(true);
+    }, 3000);
+    form.submit();
+  });
+}
+
+// Para login y registro usamos fetch normal (Apps Script acepta con redirect)
+async function sheetCall(payload) {
   try {
-    await fetch(SHEET_URL, {
+    const res = await fetch(SHEET_URL, {
       method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     });
+    return await res.json();
+  } catch(err) {
+    // fallback: try with no-cors (won't read response but saves data)
+    try {
+      await fetch(SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch(e) {}
+    throw err;
+  }
+}
+
+async function sheetPost(payload) {
+  try {
+    await sheetCall(payload);
     return true;
   } catch(err) {
     console.error('Sheets error:', err);
@@ -698,8 +752,7 @@ async function sheetCargar() {
   try {
     const uid = currentUser ? currentUser.uid : '';
     const rol = currentUser ? currentUser.rol : '';
-    const res = await fetch(SHEET_URL + '?uid=' + uid + '&rol=' + rol + '&t=' + Date.now());
-    const data = await res.json();
+    const data = await jsonpGet({ uid, rol, t: Date.now() });
     if (Array.isArray(data) && data.length > 0) {
       apuestas = data.map(r => ({
         id: Number(r.id),
