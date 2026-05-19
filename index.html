@@ -509,7 +509,7 @@ const PARTIDOS = [
 const EQUIPOS = [...new Set(PARTIDOS.flatMap(p=>[p.local,p.visitante]))].sort();
 const GRUPOS = [...new Set(PARTIDOS.map(p=>p.grupo))];
 
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbxCEuzRU8qhW5RmJNPwxvo6sRmYzo16uByhHR6xraisWzMR4CjOKQHudAzKbpDrStKmHw/exec';
+const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzqjSPJA2vTtsRT21wn5FRiSdzseOik5uJQTNzuTI1zg3WXnITOJAkhjhnRwgxWt-Eh0w/exec';
 
 let apuestas = [];
 let resultados = {};
@@ -730,36 +730,36 @@ function iframePost(payload) {
 }
 
 // Para login y registro usamos fetch normal (Apps Script acepta con redirect)
-async function sheetCall(payload) {
-  // Intentar con text/plain (Apps Script lo acepta sin preflight CORS)
-  const attempts = [
-    () => fetch(SHEET_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-      body: JSON.stringify(payload)
-    }),
-    () => fetch(SHEET_URL, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    }),
-  ];
-  let lastErr;
-  for (const attempt of attempts) {
-    try {
-      const res = await attempt();
-      const text = await res.text();
-      return JSON.parse(text);
-    } catch(err) {
-      lastErr = err;
-      continue;
+// Todas las llamadas via JSONP (GET con callback) para evitar CORS
+function jsonpCall(params) {
+  return new Promise((resolve, reject) => {
+    const cbName = '_cb' + Date.now() + Math.floor(Math.random()*9999);
+    const script = document.createElement('script');
+    const timer = setTimeout(() => {
+      cleanup();
+      reject(new Error('Timeout — sin respuesta del servidor'));
+    }, 20000);
+    function cleanup() {
+      clearTimeout(timer);
+      delete window[cbName];
+      if (script.parentNode) script.parentNode.removeChild(script);
     }
-  }
-  throw lastErr;
+    window[cbName] = (data) => { cleanup(); resolve(data); };
+    script.onerror = () => { cleanup(); reject(new Error('Error de red')); };
+    // Codificar el payload como parámetro GET
+    const qs = 'callback=' + cbName + '&payload=' + encodeURIComponent(JSON.stringify(params)) + '&t=' + Date.now();
+    script.src = SHEET_URL + '?' + qs;
+    document.head.appendChild(script);
+  });
+}
+
+async function sheetCall(payload) {
+  return await jsonpCall(payload);
 }
 
 async function sheetPost(payload) {
   try {
-    await sheetCall(payload);
+    await jsonpCall(payload);
     return true;
   } catch(err) {
     console.error('Sheets error:', err);
