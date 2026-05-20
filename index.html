@@ -503,7 +503,9 @@ function getPts(id){return (criterios.find(c=>c.id===id)||{pts:0}).pts;}
 // AUTH OBSERVER
 // ============================================================
 auth.onAuthStateChanged(async user => {
-  document.getElementById("loading-overlay").style.display = "none";
+  console.log("onAuthStateChanged fired, user:", user ? user.email : "null");
+  const overlay = document.getElementById("loading-overlay");
+  if (overlay) overlay.style.display = "none";
   if (user) {
     // Cargar perfil de Firestore
     const snap = await db.collection("usuarios").doc(user.uid).get();
@@ -1086,4 +1088,20 @@ function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t
 
 // ============================================================
 // ARRANCAR
-// ========================== 
+// ==========================
+document.addEventListener('DOMContentLoaded', () => {
+  init();
+  cargarResultados();
+  // Fallback: si onAuthStateChanged no responde en 6s, mostrar login
+  setTimeout(() => {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay && overlay.style.display !== 'none') {
+      console.warn('Firebase timeout — mostrando login');
+      overlay.style.display = 'none';
+      document.getElementById('auth-overlay').style.display = 'flex';
+    }
+  }, 6000);
+});
+</script>
+</body>
+</html>
