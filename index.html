@@ -149,6 +149,21 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
 /* PUNTOS INFO */
 .pts-info { background:var(--oro-light);border:1px solid #f0d89a;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px; }
 
+/* PUNTOS CONFIG */
+/* PUNTOS CONFIG */
+.pts-config-row { display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--border); }
+.pts-config-row:last-child { border-bottom:none; }
+.pts-config-icon { font-size:20px;width:32px;text-align:center;flex-shrink:0; }
+.pts-config-info { flex:1; }
+.pts-config-name { font-size:14px;font-weight:600; }
+.pts-config-desc { font-size:12px;color:var(--muted);margin-top:2px; }
+.pts-config-val { width:64px;text-align:center;font-size:18px;font-weight:700;padding:8px 4px;flex-shrink:0; }
+.pts-config-del { background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px 6px;border-radius:6px; }
+.pts-config-del:hover { background:#fee2e2;color:var(--rojo); }
+.add-criteria-row { display:flex;gap:8px;margin-top:12px;flex-wrap:wrap; }
+.add-criteria-row input { flex:1;min-width:120px; }
+.add-criteria-row input.pts-num { width:64px;flex:none;text-align:center;font-size:16px;font-weight:700; }
+
 /* EMPTY / TOAST */
 .empty { text-align:center;padding:36px 20px;color:var(--muted);font-size:14px; }
 .empty-ico { font-size:36px;margin-bottom:8px; }
@@ -221,7 +236,7 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
   <button onclick="showTab('apuestas',this)">📋 Apuestas</button>
   <button onclick="showTab('resultados',this)">🎯 Resultados</button>
   <button onclick="showTab('tabla',this)">🏅 Tabla</button>
-  <button id="nav-admin" onclick="showTab('admin',this)" style="display:none;">⚙️ Usuarios <span class="admin-badge">Admin</span></button>
+  <button id="nav-admin" onclick="showTab('admin',this)" style="display:none;">⚙️ Admin <span class="admin-badge">Admin</span></button>
 </nav>
 
 <!-- MAIN -->
@@ -284,9 +299,9 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
       </div>
       <button class="btn btn-primary" onclick="registrar()">✓ Registrar apuesta</button>
     </div>
-    <div class="pts-info">
+    <div class="pts-info" id="pts-info-display">
       <strong style="color:var(--oro);">Sistema de puntuación:</strong>
-      Resultado exacto = <strong>3 pts</strong> · Ganador correcto = <strong>1 pt</strong> · Campeón acertado = <strong>5 pts</strong>
+      <span id="pts-info-text">Cargando...</span>
     </div>
   </div>
 
@@ -323,8 +338,16 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
   <!-- RESULTADOS -->
   <div class="panel" id="tab-resultados">
     <div class="card" style="margin-bottom:12px;">
-      <div class="card-title">Ingresar resultados reales</div>
-      <p style="font-size:13px;color:var(--muted);">Al guardar un resultado se calculan los puntos automáticamente.</p>
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap;">
+        <div>
+          <div class="card-title" style="margin-bottom:4px;">Ingresar resultados reales</div>
+          <p style="font-size:13px;color:var(--muted);">Al guardar un resultado se calculan los puntos automáticamente.</p>
+        </div>
+        <button class="btn btn-gold btn-sm" id="btn-sync" onclick="syncResultados()" style="white-space:nowrap;margin-top:4px;">
+          🔄 Sincronizar resultados
+        </button>
+      </div>
+      <div id="sync-msg" style="display:none;margin-top:10px;padding:8px 12px;border-radius:8px;font-size:13px;"></div>
     </div>
     <div id="lista-resultados"></div>
   </div>
@@ -347,11 +370,34 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
 
   <!-- ADMIN -->
   <div class="panel" id="tab-admin">
-    <div class="card" style="margin-bottom:12px;">
-      <div class="card-title">Gestión de usuarios <span class="admin-badge">Admin</span></div>
-      <p style="font-size:13px;color:var(--muted);">Participantes registrados en la polla.</p>
+    <div class="card" style="margin-bottom:14px;padding-bottom:0;">
+      <div class="card-title" style="margin-bottom:0;">Panel de administración <span class="admin-badge">Admin</span></div>
+      <div style="display:flex;gap:0;margin-top:12px;border-top:1px solid var(--border);">
+        <button class="admin-sub-tab active" id="asubt-usuarios" onclick="adminSubTab('usuarios')" style="flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--verde);border-bottom:2px solid var(--verde);">👥 Usuarios</button>
+        <button class="admin-sub-tab" id="asubt-puntos" onclick="adminSubTab('puntos')" style="flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;">🏆 Puntuación</button>
+      </div>
     </div>
-    <div id="lista-usuarios"></div>
+
+    <div id="admin-panel-usuarios">
+      <div id="lista-usuarios"></div>
+    </div>
+
+    <div id="admin-panel-puntos" style="display:none;">
+      <div class="card">
+        <div class="card-title">Configurar sistema de puntos</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define cuántos puntos vale cada criterio. Los cambios aplican a todos los cálculos inmediatamente.</p>
+        <div id="lista-criterios"></div>
+        <div class="add-criteria-row" style="margin-top:16px;padding-top:14px;border-top:1px solid var(--border);">
+          <input type="text" id="new-crit-nombre" placeholder="Ej: Goleador acertado" />
+          <input type="number" class="pts-num" id="new-crit-pts" min="0" max="99" value="2" placeholder="Pts" />
+          <button class="btn btn-primary" style="width:auto;padding:10px 18px;" onclick="agregarCriterio()">+ Agregar</button>
+        </div>
+      </div>
+      <div class="card" style="margin-top:0;">
+        <div class="card-title">Vista previa</div>
+        <div id="pts-preview"></div>
+      </div>
+    </div>
   </div>
 
 </div>
@@ -362,7 +408,32 @@ input:focus,select:focus { border-color:var(--verde);background:white; }
 // ============================================================
 // CONFIGURACIÓN
 // ============================================================
-const SHEET_URL = 'https://script.google.com/macros/s/AKfycbzWPDuiFlhTlZOADhWVdsf6NGLvWecTz9nenQpG8temPsr8BE_h02GLZZSTi9uJf_RhhA/exec';
+const SHEET_URL   = 'https://script.google.com/macros/s/AKfycbyrfr357hj0XWJW2BrJoEL2S-ktSkBj2wLXYYmR8HIg6QA5A54udB5oGRhjHpHDNx8erw/exec';
+const API_KEY     = '104200f20feebd5784db790f449e3a00';
+const API_BASE    = 'https://v3.football.api-sports.io';
+const WC_2026_ID  = 1; // ID del torneo Mundial 2026 en API-Football
+
+// ============================================================
+// SISTEMA DE PUNTUACIÓN (configurable por admin)
+// ============================================================
+const CRITERIOS_DEFAULT = [
+  { id:'resultado_exacto', nombre:'Resultado exacto',   desc:'Marcador final correcto', icon:'🎯', pts:3,  fijo:true },
+  { id:'ganador_correcto', nombre:'Ganador correcto',   desc:'Acertó quién gana',       icon:'✅', pts:1,  fijo:true },
+  { id:'empate_correcto',  nombre:'Empate acertado',    desc:'Predijo el empate',       icon:'🤝', pts:1,  fijo:true },
+  { id:'campeon',          nombre:'Campeón acertado',   desc:'Acertó el campeón',       icon:'🏆', pts:5,  fijo:true },
+];
+let criterios = JSON.parse(localStorage.getItem('polla_criterios') || 'null') || CRITERIOS_DEFAULT.map(c=>({...c}));
+
+function saveCriterios() {
+  localStorage.setItem('polla_criterios', JSON.stringify(criterios));
+  renderPtsInfo();
+  renderApuestas();
+  renderTabla();
+}
+
+function getPts(id) {
+  return (criterios.find(c=>c.id===id)||{pts:0}).pts;
+}
 
 // ============================================================
 // DATOS: PARTIDOS MUNDIAL 2026
@@ -585,6 +656,7 @@ function loginSuccess(data) {
   document.getElementById('hdr-rol').textContent    = data.rol==='admin' ? '👑 Administrador' : '👤 Participante';
   if (data.rol==='admin') document.getElementById('nav-admin').style.display='';
   sheetCargar();
+  renderPtsInfo();
 }
 
 function doLogout() {
@@ -645,7 +717,7 @@ function showTab(id, btn) {
   if(id==='tabla')     renderTabla();
   if(id==='resultados')renderResultados();
   if(id==='partidos')  renderPartidos();
-  if(id==='admin')     renderUsuarios();
+  if(id==='admin')     { renderUsuarios(); renderCriterios(); }
 }
 
 // ============================================================
@@ -716,12 +788,22 @@ function registrar() {
 // PUNTOS
 // ============================================================
 function calcPuntos(a) {
-  if (a.tipo==='campeon') return 0;
+  // Campeón acertado
+  if (a.tipo==='campeon') {
+    // Se evalúa cuando el admin registre al campeón — por ahora 0
+    return 0;
+  }
   if (!a.partidoId || !resultados[a.partidoId]) return 0;
   const r = resultados[a.partidoId];
-  if (a.tipo==='grupo') {
-    if (a.golLocal===r.local && a.golVisitante===r.visitante) return 3;
-    if (Math.sign(a.golLocal-a.golVisitante)===Math.sign(r.local-r.visitante)) return 1;
+  if (a.tipo==='grupo' || a.tipo==='eliminatoria') {
+    const gl = Number(a.golLocal)||0, gv = Number(a.golVisitante)||0;
+    // Resultado exacto
+    if (gl===r.local && gv===r.visitante) return getPts('resultado_exacto');
+    // Empate acertado
+    if (r.local===r.visitante && gl===gv) return getPts('empate_correcto');
+    // Ganador correcto
+    if (Math.sign(gl-gv)===Math.sign(r.local-r.visitante)) return getPts('ganador_correcto');
+    // Criterios personalizados (extra) — no aplican automáticamente
   }
   return 0;
 }
@@ -919,6 +1001,87 @@ function renderTabla() {
 }
 
 // ============================================================
+// ADMIN: SUB-TABS
+// ============================================================
+function adminSubTab(tab) {
+  document.getElementById('admin-panel-usuarios').style.display = tab==='usuarios' ? 'block' : 'none';
+  document.getElementById('admin-panel-puntos').style.display   = tab==='puntos'   ? 'block' : 'none';
+  document.getElementById('asubt-usuarios').style.cssText = tab==='usuarios'
+    ? 'flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--verde);border-bottom:2px solid var(--verde);'
+    : 'flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;';
+  document.getElementById('asubt-puntos').style.cssText = tab==='puntos'
+    ? 'flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--verde);border-bottom:2px solid var(--verde);'
+    : 'flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;';
+  if (tab==='puntos') renderCriterios();
+}
+
+// ============================================================
+// PUNTUACIÓN CONFIGURABLE
+// ============================================================
+function renderPtsInfo() {
+  const el = document.getElementById('pts-info-text');
+  if (!el) return;
+  el.innerHTML = criterios.map(c => `${c.icon} ${c.nombre} = <strong>${c.pts} pts</strong>`).join(' · ');
+}
+
+function renderCriterios() {
+  const container = document.getElementById('lista-criterios');
+  const preview   = document.getElementById('pts-preview');
+  if (!container) return;
+
+  container.innerHTML = criterios.map((c,i) => `
+    <div class="pts-config-row">
+      <div class="pts-config-icon">${c.icon||'⭐'}</div>
+      <div class="pts-config-info">
+        <div class="pts-config-name">${c.nombre}</div>
+        ${c.desc ? `<div class="pts-config-desc">${c.desc}</div>` : ''}
+      </div>
+      <input type="number" class="pts-config-val" value="${c.pts}" min="0" max="99"
+        oninput="criterios[${i}].pts=parseInt(this.value)||0; saveCriterios(); renderCriterios();"
+        style="width:64px;text-align:center;font-size:18px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:'Inter',sans-serif;background:var(--bg);" />
+      <span style="font-size:12px;color:var(--muted);margin-left:2px;">pts</span>
+      ${!c.fijo ? `<button class="pts-config-del" onclick="eliminarCriterio(${i})" title="Eliminar">🗑</button>` : '<div style="width:28px;"></div>'}
+    </div>`).join('');
+
+  if (preview) {
+    preview.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;">` +
+      criterios.map(c => `<div style="background:var(--oro-light);border:1px solid #f0d89a;border-radius:8px;padding:10px 16px;text-align:center;min-width:100px;">
+        <div style="font-size:24px;">${c.icon||'⭐'}</div>
+        <div style="font-family:'Bebas Neue',sans-serif;font-size:28px;color:var(--verde);">${c.pts}</div>
+        <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">${c.nombre}</div>
+      </div>`).join('') + `</div>`;
+  }
+}
+
+function agregarCriterio() {
+  const nombre = document.getElementById('new-crit-nombre').value.trim();
+  const pts    = parseInt(document.getElementById('new-crit-pts').value) || 1;
+  if (!nombre) { toast('⚠ Escribe el nombre del criterio'); return; }
+  criterios.push({ id:'custom_'+Date.now(), nombre, desc:'Criterio personalizado', icon:'⭐', pts, fijo:false });
+  saveCriterios();
+  renderCriterios();
+  document.getElementById('new-crit-nombre').value = '';
+  document.getElementById('new-crit-pts').value = '2';
+  toast('✓ Criterio agregado');
+}
+
+function eliminarCriterio(i) {
+  if (!confirm('¿Eliminar este criterio?')) return;
+  criterios.splice(i, 1);
+  saveCriterios();
+  renderCriterios();
+  toast('Criterio eliminado');
+}
+
+function resetCriterios() {
+  if (!confirm('¿Restaurar puntuación por defecto?')) return;
+  criterios = CRITERIOS_DEFAULT.map(c=>({...c}));
+  saveCriterios();
+  renderCriterios();
+  toast('✓ Puntuación restaurada');
+}
+
+// ============================================================
 // ADMIN: USUARIOS
 // ============================================================
 async function renderUsuarios() {
@@ -949,6 +1112,141 @@ async function eliminarUsuario(uid, nombre) {
   if (!confirm('¿Eliminar a ' + nombre + '?')) return;
   await jsonpCall({ action:'delete_usuario', uid });
   toast('Usuario eliminado'); renderUsuarios();
+}
+
+// ============================================================
+// SINCRONIZACIÓN AUTOMÁTICA DE RESULTADOS (API-Football)
+// ============================================================
+
+// Mapeo nombre local → nombre en API-Football
+const TEAM_MAP = {
+  'México':'Mexico','Sudáfrica':'South Africa','Corea del Sur':'South Korea',
+  'Rep. Checa':'Czech Republic','Canadá':'Canada','Bosnia y Herz.':'Bosnia',
+  'Qatar':'Qatar','Suiza':'Switzerland','Brasil':'Brazil','Marruecos':'Morocco',
+  'Haití':'Haiti','Escocia':'Scotland','Estados Unidos':'USA','Australia':'Australia',
+  'Turquía':'Turkey','Paraguay':'Paraguay','Alemania':'Germany','Curazao':'Curacao',
+  'Costa de Marfil':'Ivory Coast','Ecuador':'Ecuador','Países Bajos':'Netherlands',
+  'Japón':'Japan','Suecia':'Sweden','Túnez':'Tunisia','Bélgica':'Belgium',
+  'Egipto':'Egypt','Irán':'Iran','Nueva Zelanda':'New Zealand','España':'Spain',
+  'Cabo Verde':'Cape Verde','Uruguay':'Uruguay','Arabia Saudita':'Saudi Arabia',
+  'Francia':'France','Senegal':'Senegal','Noruega':'Norway','Irak':'Iraq',
+  'Argentina':'Argentina','Argelia':'Algeria','Austria':'Austria','Jordania':'Jordan',
+  'Portugal':'Portugal','Rep. Dem. Congo':'DR Congo','Colombia':'Colombia',
+  'Uzbekistán':'Uzbekistan','Inglaterra':'England','Croacia':'Croatia',
+  'Ghana':'Ghana','Panamá':'Panama',
+};
+
+function showSyncMsg(msg, tipo) {
+  const el = document.getElementById('sync-msg');
+  el.style.display = 'block';
+  el.style.background = tipo==='ok' ? 'var(--verde-light)' : tipo==='err' ? '#fee2e2' : 'var(--oro-light)';
+  el.style.color = tipo==='ok' ? 'var(--verde)' : tipo==='err' ? 'var(--rojo)' : '#854F0B';
+  el.style.border = '1px solid ' + (tipo==='ok' ? '#a3d9b8' : tipo==='err' ? '#fecaca' : '#f0d89a');
+  el.textContent = msg;
+}
+
+async function syncResultados() {
+  const btn = document.getElementById('btn-sync');
+  btn.disabled = true;
+  btn.textContent = '⏳ Sincronizando...';
+  showSyncMsg('Consultando resultados en API-Football...', 'info');
+
+  try {
+    // Buscar el Mundial 2026 — season 2026, league 1 (FIFA World Cup)
+    const url = `${API_BASE}/fixtures?league=1&season=2026&status=FT`;
+    const res = await fetch(url, {
+      headers: {
+        'x-apisports-key': API_KEY,
+        'x-rapidapi-key': API_KEY,
+      }
+    });
+
+    if (!res.ok) throw new Error('Error HTTP ' + res.status);
+    const data = await res.json();
+
+    if (!data.response || data.response.length === 0) {
+      showSyncMsg('⚠ No se encontraron partidos finalizados aún. Puede que el torneo no haya comenzado.', 'info');
+      btn.disabled = false; btn.textContent = '🔄 Sincronizar resultados';
+      return;
+    }
+
+    let actualizados = 0;
+    let noEncontrados = [];
+
+    data.response.forEach(fixture => {
+      const homeApi = fixture.teams.home.name;
+      const awayApi = fixture.teams.away.name;
+      const goalsH  = fixture.goals.home;
+      const goalsA  = fixture.goals.away;
+      if (goalsH === null || goalsA === null) return;
+
+      // Buscar partido en nuestro fixture
+      const partido = PARTIDOS.find(p => {
+        const localApi    = TEAM_MAP[p.local]    || p.local;
+        const visitApi    = TEAM_MAP[p.visitante] || p.visitante;
+        return (localApi===homeApi && visitApi===awayApi) ||
+               (localApi===awayApi && visitApi===homeApi);
+      });
+
+      if (partido) {
+        // Ajustar orden si viene invertido
+        const localApi = TEAM_MAP[partido.local] || partido.local;
+        if (localApi === homeApi) {
+          resultados[partido.id] = { local: goalsH, visitante: goalsA };
+        } else {
+          resultados[partido.id] = { local: goalsA, visitante: goalsH };
+        }
+        actualizados++;
+        // Actualizar puntos en Sheets
+        apuestas.filter(a=>a.partidoId===partido.id).forEach(a => {
+          sheetPost({ action:'update_puntos', id:a.id, puntos:calcPuntos(a) });
+        });
+      } else {
+        noEncontrados.push(homeApi + ' vs ' + awayApi);
+      }
+    });
+
+    let msg = `✓ ${actualizados} partido(s) actualizado(s).`;
+    if (noEncontrados.length) msg += ` No encontrados: ${noEncontrados.slice(0,3).join(', ')}${noEncontrados.length>3?'...':''}`;
+    showSyncMsg(msg, 'ok');
+    toast(`✓ ${actualizados} resultado(s) sincronizados`);
+    renderResultados(); renderApuestas(); renderTabla(); renderPartidos();
+
+  } catch(err) {
+    // Si falla por CORS (común en llamadas directas), usar proxy via Apps Script
+    showSyncMsg('⚠ Error de conexión directa. Intentando vía servidor...', 'info');
+    try {
+      const data = await jsonpCall({ action:'sync_api', apiKey: API_KEY, league:1, season:2026 });
+      if (data.ok && data.fixtures) {
+        let actualizados = 0;
+        data.fixtures.forEach(f => {
+          const partido = PARTIDOS.find(p => {
+            const lm = TEAM_MAP[p.local]    || p.local;
+            const vm = TEAM_MAP[p.visitante] || p.visitante;
+            return (lm===f.home && vm===f.away) || (lm===f.away && vm===f.home);
+          });
+          if (partido && f.goalsH!==null) {
+            const lm = TEAM_MAP[partido.local] || partido.local;
+            resultados[partido.id] = lm===f.home
+              ? {local:f.goalsH, visitante:f.goalsA}
+              : {local:f.goalsA, visitante:f.goalsH};
+            actualizados++;
+            apuestas.filter(a=>a.partidoId===partido.id).forEach(a =>
+              sheetPost({ action:'update_puntos', id:a.id, puntos:calcPuntos(a) }));
+          }
+        });
+        showSyncMsg(`✓ ${actualizados} partido(s) actualizado(s) vía servidor.`, 'ok');
+        renderResultados(); renderApuestas(); renderTabla(); renderPartidos();
+      } else {
+        showSyncMsg('❌ ' + (data.error||'No se pudo conectar con la API'), 'err');
+      }
+    } catch(e2) {
+      showSyncMsg('❌ Error: ' + e2.message + '. Usa el ingreso manual por ahora.', 'err');
+    }
+  }
+
+  btn.disabled = false;
+  btn.textContent = '🔄 Sincronizar resultados';
 }
 
 // ============================================================
