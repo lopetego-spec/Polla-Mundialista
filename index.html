@@ -10,6 +10,22 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script>
+// Inicializar Firebase inmediatamente después de cargar los SDKs
+const firebaseConfig = {
+  apiKey: "AIzaSyC8-nms4nUH5Ac9CpMLz6HTiqjwZHZFd6g",
+  authDomain: "polla-mundialista-2026-e0f4f.firebaseapp.com",
+  projectId: "polla-mundialista-2026-e0f4f",
+  storageBucket: "polla-mundialista-2026-e0f4f.firebasestorage.app",
+  messagingSenderId: "945090661961",
+  appId: "1:945090661961:web:e879cdb032edf8631b7998"
+};
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
+const auth = firebase.auth();
+const db   = firebase.firestore();
+</script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
 :root{
@@ -376,24 +392,13 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
 
 <script>
 // ============================================================
-// FIREBASE CONFIG
+// FIREBASE CONFIG — inicializado en el bloque de scripts del head
 // ============================================================
-const firebaseConfig = {
-  apiKey: "AIzaSyC8-nms4nUH5Ac9CpMLz6HTiqjwZHZFd6g",
-  authDomain: "polla-mundialista-2026-e0f4f.firebaseapp.com",
-  projectId: "polla-mundialista-2026-e0f4f",
-  storageBucket: "polla-mundialista-2026-e0f4f.firebasestorage.app",
-  messagingSenderId: "945090661961",
-  appId: "1:945090661961:web:e879cdb032edf8631b7998"
-};
-firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.firestore();
 
 // ============================================================
 // CONSTANTES
 // ============================================================
-const ADMIN_EMAIL = "lopetego@gmail.com"; // cambia por tu correo
+const ADMIN_EMAIL = "fabio@admin.com"; // cambia por tu correo
 const API_KEY_FOOTBALL = "104200f20feebd5784db790f449e3a00";
 
 const PARTIDOS = [
