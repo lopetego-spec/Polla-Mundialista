@@ -1,4 +1,4 @@
-// FIREBASE CONFIG — inicializado en el bloque de scripts del head
+// FIREBASE CONFIG - inicializado en el bloque de scripts del head
 
 // CONSTANTES
 const ADMIN_EMAIL = "fabio@admin.com"; // cambia por tu correo
@@ -791,13 +791,10 @@ async function eliminarUsuario(uid, nombre) {
 
 function enviarWhatsApp(celular, nombre) {
   const msg = encodeURIComponent(
-    `Hola ${nombre} 👋
-
-¡Te recordamos que aún no has registrado tus apuestas en la Polla Mundialista 2026! ⚽🏆
-
-Ingresa aquí: https://lopetego-spec.github.io/Polla-Mundialista/
-
-¡No te quedes por fuera!`
+    'Hola ' + nombre + ' \uD83D\uDC4B\n\n' +
+    '\u00A1Te recordamos que a\u00FAn no has registrado tus apuestas en la Polla Mundialista 2026! \u26BD\uD83C\uDFC6\n\n' +
+    'Ingresa aqu\u00ED: https://lopetego-spec.github.io/Polla-Mundialista/\n\n' +
+    '\u00A1No te quedes por fuera!'
   );
   // Limpiar número: quitar espacios, guiones, +57, etc.
   const num = celular.replace(/[^0-9]/g,'');
