@@ -821,10 +821,9 @@ async function copiarListaSinApostar() {
   const snap = await db.collection("usuarios").get();
   const conApuestas = new Set(apuestas.map(a=>a.uid));
   const sinApostar = snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>!conApuestas.has(u.uid));
-  const lista = sinApostar.map(u=>`• ${u.nombre} (${u.celular||u.email})`).join('
-');
-  navigator.clipboard.writeText(`Usuarios sin apuestas:
-${lista}`);
+  const lista = sinApostar.map(u=>`• ${u.nombre} (${u.celular||u.email})`).join(' ');
+
+  navigator.clipboard.writeText('Usuarios sin apuestas:\n' + lista);
   toast(`📋 Lista copiada (${sinApostar.length} usuarios)`);
 }
 
