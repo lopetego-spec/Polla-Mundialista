@@ -619,16 +619,35 @@ function renderCriterios() {
   const c = document.getElementById("lista-criterios");
   const p = document.getElementById("pts-preview");
   if(!c) return;
-  c.innerHTML = criterios.map((cr,i)=>`
-    <div class="pts-config-row">
-      <div class="pts-config-icon">${cr.icon}</div>
-      <div class="pts-config-info"><div class="pts-config-name">${cr.nombre}</div>${cr.desc?`<div class="pts-config-desc">${cr.desc}</div>`:""}</div>
-      <input type="number" value="${cr.pts}" min="0" max="99"
-        oninput="criterios[${i}].pts=parseInt(this.value)||0;saveCriterios();renderCriterios();"
-        style="width:64px;text-align:center;font-size:18px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
-      <span style="font-size:12px;color:var(--muted);">pts</span>
-      ${!cr.fijo?`<button onclick="eliminarCriterio(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;" title="Eliminar">🗑</button>`:'<div style="width:28px;"></div>'}
-    </div>`).join("");
+  c.innerHTML = criterios.map((cr,i)=>{
+    return `<div class="pts-config-row" style="flex-direction:column;align-items:stretch;gap:8px;padding:14px 0;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <input type="text" value="${cr.icon}" maxlength="4"
+          oninput="criterios[${i}].icon=this.value;saveCriterios();"
+          style="width:46px;text-align:center;font-size:20px;padding:6px 2px;border:1px solid var(--border);border-radius:8px;background:var(--bg);"
+          title="Icono (emoji)"/>
+        <input type="text" value="${cr.nombre}"
+          oninput="criterios[${i}].nombre=this.value;saveCriterios();"
+          style="flex:1;min-width:130px;font-size:14px;font-weight:600;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);"
+          placeholder="Nombre del criterio"/>
+        <div style="display:flex;align-items:center;gap:4px;flex-shrink:0;">
+          <input type="number" value="${cr.pts}" min="0" max="99"
+            oninput="criterios[${i}].pts=parseInt(this.value)||0;saveCriterios();"
+            style="width:58px;text-align:center;font-size:18px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
+          <span style="font-size:12px;color:var(--muted);">pts</span>
+        </div>
+        <button onclick="eliminarCriterio(${i})"
+          style="background:none;border:1px solid var(--border);border-radius:6px;cursor:pointer;font-size:14px;padding:6px 8px;color:var(--muted);"
+          title="${cr.fijo?'Restablecer por defecto':'Eliminar'}">
+          ${cr.fijo?'&#8635; Reset':'&#128465; Borrar'}
+        </button>
+      </div>
+      <input type="text" value="${cr.desc||''}"
+        oninput="criterios[${i}].desc=this.value;saveCriterios();"
+        style="font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--border);border-radius:8px;background:var(--bg);width:100%;"
+        placeholder="Descripcion (opcional)"/>
+    </div>`;
+  }).join("");
   if(p) p.innerHTML = `<div style="display:flex;flex-wrap:wrap;gap:8px;">${criterios.map(cr=>`
     <div style="background:var(--oro-light);border:1px solid #f0d89a;border-radius:8px;padding:10px 16px;text-align:center;min-width:100px;">
       <div style="font-size:24px;">${cr.icon}</div>
@@ -646,7 +665,17 @@ function agregarCriterio() {
   document.getElementById("new-crit-pts").value="2";
   toast("✓ Criterio agregado");
 }
-function eliminarCriterio(i){if(!confirm("¿Eliminar?"))return;criterios.splice(i,1);saveCriterios();renderCriterios();toast("Criterio eliminado");}
+function eliminarCriterio(i) {
+  const cr = criterios[i];
+  if (cr.fijo) {
+    if (!confirm('Restablecer "' + cr.nombre + '" a los valores por defecto?')) return;
+    const def = CRITERIOS_DEFAULT.find(d=>d.id===cr.id);
+    if (def) { criterios[i] = {...def}; saveCriterios(); renderCriterios(); toast('Criterio restablecido'); }
+  } else {
+    if (!confirm('Eliminar el criterio "' + cr.nombre + '"?')) return;
+    criterios.splice(i, 1); saveCriterios(); renderCriterios(); toast('Criterio eliminado');
+  }
+}
 
 // ADMIN USUARIOS
 function adminSubTab(tab) {
