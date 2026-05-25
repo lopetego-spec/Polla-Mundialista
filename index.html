@@ -249,7 +249,11 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
       <span class="sync-dot" style="background:#1a6b3c;"></span>Conectado con Firebase
     </div>
   </div>
-  <div class="user-pill" onclick="doLogout()" title="Cerrar sesi&oacute;n">
+  <div style="display:flex;align-items:center;gap:8px;">
+    <button onclick="abrirModalInvitar()" style="background:rgba(255,255,255,.15);border:none;color:white;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
+      &#128140; Invitar
+    </button>
+    <div class="user-pill" onclick="doLogout()" title="Cerrar sesi&oacute;n">
     <div class="u-avatar" id="hdr-avatar">?</div>
     <div><div class="u-name" id="hdr-nombre">...</div><div class="u-rol" id="hdr-rol"></div></div>
   </div>
@@ -392,7 +396,12 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
         <button id="asubt-config" onclick="adminSubTab('config')" style="flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;">&#9881;&#65039; Partidos</button>
       </div>
     </div>
-    <div id="admin-panel-usuarios"><div id="lista-usuarios"></div></div>
+    <div id="admin-panel-usuarios">
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-bottom:12px;flex-wrap:wrap;">
+        <button class="btn btn-gold btn-sm" onclick="abrirCargueUsuarios()">&#11015; Cargue masivo</button>
+      </div>
+      <div id="lista-usuarios"></div>
+    </div>
     <div id="admin-panel-config" style="display:none;">
       <div class="card">
         <div class="card-title">Configurar partidos</div>
@@ -443,5 +452,65 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
 <div class="toast" id="toast"></div>
 
 <script src="./app.js"></script>
+
+<!-- MODAL: CARGUE MASIVO -->
+<div id="modal-cargue" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--verde);">&#11015; Cargue masivo de usuarios</h2>
+      <button onclick="cerrarCargueUsuarios()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">&#10005;</button>
+    </div>
+
+    <div style="margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Opci&oacute;n 1 &mdash; Subir archivo Excel o CSV</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">El archivo debe tener columnas: <strong>nombre, celular, correo</strong></p>
+      <input type="file" id="cargue-input" accept=".xlsx,.xls,.csv" onchange="procesarArchivoCargue(event)"
+        style="font-size:13px;padding:8px;border:1px solid var(--border);border-radius:8px;width:100%;background:var(--bg);"/>
+      <div style="margin-top:8px;display:flex;gap:8px;">
+        <button class="btn btn-outline btn-sm" onclick="descargarPlantilla()">&#11015; Descargar plantilla</button>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:20px;margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em;">Opci&oacute;n 2 &mdash; Lista de correos</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:10px;">Pega los correos separados por coma, punto y coma o l&iacute;nea nueva</p>
+      <textarea id="cargue-lista-correos" rows="4" placeholder="correo1@ejemplo.com&#10;correo2@ejemplo.com&#10;correo3@ejemplo.com"
+        style="width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:'Inter',sans-serif;resize:vertical;"></textarea>
+      <button class="btn btn-primary" style="width:auto;padding:10px 20px;margin-top:8px;" onclick="procesarListaCorreos()">Procesar lista</button>
+    </div>
+
+    <div id="cargue-preview"></div>
+  </div>
+</div>
+
+<!-- MODAL: INVITAR FAMILIAR -->
+<div id="modal-invitar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
+  <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--verde);">&#128140; Invitar familiar</h2>
+      <button onclick="cerrarModalInvitar()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">&#10005;</button>
+    </div>
+
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Tu familiar se registrar&aacute; con tu link personal y quedar&aacute; vinculado a ti.</p>
+
+    <div style="margin-bottom:16px;">
+      <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Tu link de invitaci&oacute;n</label>
+      <div id="invitar-link-preview"></div>
+      <button class="btn btn-outline btn-sm" onclick="generarLinkInvitacion()">&#128203; Copiar link</button>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:16px;margin-top:4px;">
+      <div style="font-size:13px;font-weight:600;color:var(--muted);margin-bottom:12px;text-transform:uppercase;letter-spacing:.04em;">Enviar por WhatsApp</div>
+      <div style="margin-bottom:10px;">
+        <label>N&uacute;mero de celular del familiar</label>
+        <input type="tel" id="invitar-tel" placeholder="Ej: 3001234567" style="margin-top:5px;"/>
+      </div>
+      <button class="btn btn-primary" onclick="enviarInvitacionCorreo()" style="background:#25D366;">
+        &#128242; Enviar por WhatsApp
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

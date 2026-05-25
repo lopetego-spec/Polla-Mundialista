@@ -924,6 +924,213 @@ function exportXLSX(){
 function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.classList.add("show");setTimeout(()=>t.classList.remove("show"),2800);}
 
 // ARRANCAR
+
+// ============================================================
+// CARGUE MASIVO DE USUARIOS
+// ============================================================
+function abrirCargueUsuarios() {
+  document.getElementById('modal-cargue').style.display = 'flex';
+}
+function cerrarCargueUsuarios() {
+  document.getElementById('modal-cargue').style.display = 'none';
+  document.getElementById('cargue-preview').innerHTML = '';
+  document.getElementById('cargue-input').value = '';
+  document.getElementById('cargue-lista-correos').value = '';
+}
+
+function procesarArchivoCargue(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const reader = new FileReader();
+  reader.onload = function(ev) {
+    try {
+      let usuarios = [];
+      if (ext === 'csv') {
+        const lines = ev.target.result.split('\n').filter(l=>l.trim());
+        const headers = lines[0].split(',').map(h=>h.trim().toLowerCase().replace(/[^a-z]/g,''));
+        lines.slice(1).forEach(line => {
+          const cols = line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+          const obj = {};
+          headers.forEach((h,i) => obj[h] = cols[i]||'');
+          usuarios.push(normalizarUsuario(obj));
+        });
+      } else {
+        // Excel via SheetJS - loaded in HTML
+        const data = new Uint8Array(ev.target.result);
+        const wb = XLSX.read(data, {type:'array'});
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        const rows = XLSX.utils.sheet_to_json(ws, {defval:''});
+        rows.forEach(row => {
+          const obj = {};
+          Object.keys(row).forEach(k => obj[k.toLowerCase().replace(/[^a-z]/g,'')] = String(row[k]||''));
+          usuarios.push(normalizarUsuario(obj));
+        });
+      }
+      mostrarPreviewCargue(usuarios.filter(u=>u.correo));
+    } catch(err) { toast('Error al leer el archivo: ' + err.message); }
+  };
+  if (ext === 'csv') reader.readAsText(file);
+  else reader.readAsArrayBuffer(file);
+}
+
+function normalizarUsuario(obj) {
+  return {
+    nombre:  obj.nombre || obj.name || obj.n || '',
+    celular: obj.celular || obj.telefono || obj.phone || obj.cel || '',
+    correo:  obj.correo || obj.email || obj.mail || obj.e || ''
+  };
+}
+
+function procesarListaCorreos() {
+  const texto = document.getElementById('cargue-lista-correos').value;
+  const correos = texto.split(/[,;\n]/).map(c=>c.trim()).filter(c=>c.includes('@'));
+  const usuarios = correos.map(c => ({nombre: c.split('@')[0], celular: '', correo: c}));
+  mostrarPreviewCargue(usuarios);
+}
+
+function mostrarPreviewCargue(usuarios) {
+  const container = document.getElementById('cargue-preview');
+  if (!usuarios.length) { container.innerHTML = '<p style="color:var(--rojo);font-size:13px;">No se encontraron usuarios válidos</p>'; return; }
+  container.innerHTML = `
+    <div style="margin-top:14px;">
+      <div style="font-size:13px;font-weight:600;color:var(--verde);margin-bottom:8px;">
+        ✓ ${usuarios.length} usuario(s) encontrado(s)
+      </div>
+      <div style="max-height:200px;overflow-y:auto;border:1px solid var(--border);border-radius:8px;margin-bottom:12px;">
+        ${usuarios.map(u=>`
+          <div style="padding:8px 12px;border-bottom:1px solid var(--border);font-size:13px;display:flex;gap:8px;">
+            <span style="flex:1;font-weight:500;">${u.nombre||'—'}</span>
+            <span style="color:var(--muted);">${u.celular||''}</span>
+            <span style="color:var(--verde);">${u.correo}</span>
+          </div>`).join('')}
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Contraseña temporal para todos</label>
+        <input type="text" id="cargue-pass-temp" value="Polla2026" style="width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;"/>
+      </div>
+      <button class="btn btn-primary" onclick="ejecutarCargue(${JSON.stringify(usuarios).replace(/"/g,'&quot;')})" style="width:auto;padding:10px 20px;">
+        ⬆ Crear ${usuarios.length} usuario(s)
+      </button>
+    </div>`;
+}
+
+async function ejecutarCargue(usuarios) {
+  const passTemp = document.getElementById('cargue-pass-temp')?.value || 'Polla2026';
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = 'Creando usuarios...';
+  let ok = 0, err = 0;
+  for (const u of usuarios) {
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(u.correo, passTemp);
+      await db.collection('usuarios').doc(cred.user.uid).set({
+        nombre:  u.nombre || u.correo.split('@')[0],
+        celular: u.celular || '',
+        email:   u.correo,
+        rol:     'user',
+        passTemp: true,
+        creado:  firebase.firestore.FieldValue.serverTimestamp()
+      });
+      await firebase.auth().signOut();
+      // Re-login as admin
+      ok++;
+    } catch(e) {
+      console.error('Error creando ' + u.correo + ':', e.message);
+      err++;
+    }
+  }
+  // Re-login admin
+  toast(`✓ ${ok} usuario(s) creado(s)${err?' · '+err+' errores':''}`);
+  cerrarCargueUsuarios();
+  renderUsuarios();
+}
+
+// ============================================================
+// INVITACIONES
+// ============================================================
+function generarLinkInvitacion() {
+  const base = window.location.origin + window.location.pathname;
+  const ref   = btoa(currentUser.uid + '|' + currentUser.nombre);
+  const link  = base + '?ref=' + ref;
+  navigator.clipboard.writeText(link);
+  toast('📋 Link copiado: compártelo con tu familiar');
+  return link;
+}
+
+function abrirModalInvitar() {
+  document.getElementById('modal-invitar').style.display = 'flex';
+  // Show personal link
+  const link = generarLinkInvitacion().replace(/&/g,'&amp;');
+  const container = document.getElementById('invitar-link-preview');
+  if (container) container.innerHTML = `
+    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all;color:var(--verde);margin-bottom:12px;">
+      ${link}
+    </div>`;
+}
+
+function cerrarModalInvitar() {
+  document.getElementById('modal-invitar').style.display = 'none';
+}
+
+async function enviarInvitacionCorreo() {
+  const correo = document.getElementById('invitar-correo').value.trim();
+  if (!correo || !correo.includes('@')) { toast('Ingresa un correo válido'); return; }
+  const link = generarLinkInvitacion();
+  const msg = encodeURIComponent(
+    'Hola! Te invito a participar en la Polla Mundialista 2026.\n\n' +
+    'Registrate aqui: ' + link + '\n\n' +
+    'Te invita: ' + currentUser.nombre
+  );
+  // Open WhatsApp with the invitation
+  const tel = document.getElementById('invitar-tel').value.trim();
+  if (tel) {
+    const num = tel.replace(/[^0-9]/g,'');
+    const numIntl = num.startsWith('57') ? num : '57' + num;
+    window.open('https://wa.me/' + numIntl + '?text=' + msg, '_blank');
+  } else {
+    // Copy link
+    navigator.clipboard.writeText(link);
+    toast('Link de invitacion copiado para ' + correo);
+  }
+  cerrarModalInvitar();
+}
+
+// Leer ref de invitacion al cargar
+function leerRefInvitacion() {
+  const params = new URLSearchParams(window.location.search);
+  const ref = params.get('ref');
+  if (!ref) return null;
+  try {
+    const decoded = atob(ref);
+    const [uid, nombre] = decoded.split('|');
+    return { uid, nombre };
+  } catch(e) { return null; }
+}
+
+// Guardar quien invitó al registrarse
+async function guardarInvitacion(newUid) {
+  const ref = leerRefInvitacion();
+  if (!ref) return;
+  await db.collection('usuarios').doc(newUid).update({ invitadoPor: ref.uid, invitadoPorNombre: ref.nombre });
+}
+
+
+// ============================================================
+// PLANTILLA DESCARGA
+// ============================================================
+function descargarPlantilla() {
+  const data = [
+    ['nombre', 'celular', 'correo'],
+    ['Juan Perez', '3001234567', 'juan@correo.com'],
+    ['Maria Lopez', '3009876543', 'maria@correo.com'],
+  ];
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(data), 'Usuarios');
+  XLSX.writeFile(wb, 'plantilla_usuarios.xlsx');
+  toast('Plantilla descargada');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   init();
   cargarResultados();
