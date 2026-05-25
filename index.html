@@ -156,6 +156,26 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
 .pts-config-info{flex:1;}
 .pts-config-name{font-size:14px;font-weight:600;}
 .pts-config-desc{font-size:12px;color:var(--muted);margin-top:2px;}
+
+/* CIERRE APUESTAS */
+.cierre-badge { display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:3px 10px;border-radius:10px;margin-left:6px; }
+.cierre-abierto { background:#d4edd9;color:#1a6b3c; }
+.cierre-cerrado { background:#fee2e2;color:#c0392b; }
+.cierre-pronto  { background:#fdf3dc;color:#c8972b; }
+.partido-card.cerrado { opacity:.6;cursor:not-allowed; }
+.partido-card.cerrado:hover { border-color:var(--border);box-shadow:none; }
+.fase-header { background:var(--verde);color:white;border-radius:var(--radius);padding:14px 18px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px; }
+.fase-header h3 { font-family:"Bebas Neue",sans-serif;font-size:20px;letter-spacing:.04em; }
+.fase-estado { font-size:12px;opacity:.85; }
+/* CONFIG PARTIDOS */
+.config-partido-row { padding:12px 0;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;gap:10px;flex-wrap:wrap; }
+.config-partido-row:last-child { border-bottom:none; }
+.config-partido-info { flex:1;min-width:180px; }
+.config-partido-name { font-size:13px;font-weight:600; }
+.config-partido-controls { display:flex;gap:8px;flex-wrap:wrap;align-items:center; }
+.config-partido-controls input[type="datetime-local"] { font-size:12px;padding:6px 10px;width:auto; }
+.config-partido-controls input[type="checkbox"] { width:16px;height:16px;cursor:pointer;flex-shrink:0; }
+
 /* MISC */
 .pts-info{background:var(--oro-light);border:1px solid #f0d89a;border-radius:var(--radius);padding:12px 16px;margin-bottom:14px;font-size:13px;}
 .empty{text-align:center;padding:36px 20px;color:var(--muted);font-size:14px;}
@@ -366,12 +386,44 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
   <div class="panel" id="tab-admin">
     <div class="card" style="margin-bottom:14px;padding-bottom:0;">
       <div class="card-title" style="margin-bottom:0;">Panel de administraci&oacute;n <span class="admin-badge">Admin</span></div>
-      <div style="display:flex;margin-top:12px;border-top:1px solid var(--border);">
-        <button id="asubt-usuarios" onclick="adminSubTab('usuarios')" style="flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--verde);border-bottom:2px solid var(--verde);">&#128101; Usuarios</button>
-        <button id="asubt-puntos" onclick="adminSubTab('puntos')" style="flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;">&#127942; Puntuaci&oacute;n</button>
+      <div style="display:flex;margin-top:12px;border-top:1px solid var(--border);overflow-x:auto;">
+        <button id="asubt-usuarios" onclick="adminSubTab('usuarios')" style="flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--verde);border-bottom:2px solid var(--verde);white-space:nowrap;">&#128101; Usuarios</button>
+        <button id="asubt-puntos" onclick="adminSubTab('puntos')" style="flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;">&#127942; Puntuaci&oacute;n</button>
+        <button id="asubt-config" onclick="adminSubTab('config')" style="flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;white-space:nowrap;">&#9881;&#65039; Partidos</button>
       </div>
     </div>
     <div id="admin-panel-usuarios"><div id="lista-usuarios"></div></div>
+    <div id="admin-panel-config" style="display:none;">
+      <div class="card">
+        <div class="card-title">Configurar partidos</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Define fecha/hora de cierre de apuestas y criterios de desempate por partido.</p>
+        <div class="filters" style="margin-bottom:16px;">
+          <select id="cfg-fil-fecha" onchange="renderConfigPartidos()"><option value="">Todas las fechas</option></select>
+          <select id="cfg-fil-grupo" onchange="renderConfigPartidos()"><option value="">Todos los grupos</option></select>
+        </div>
+        <div id="config-partidos-lista"></div>
+      </div>
+      <div class="card" style="margin-top:0;">
+        <div class="card-title">Cierre global por fase</div>
+        <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">Aplica a todos los partidos que no tengan cierre individual.</p>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;">
+          <div style="flex:1;min-width:200px;">
+            <label>Fase de grupos — cierre global</label>
+            <input type="datetime-local" id="cierre-global-grupos" onchange="saveCierreGlobal()"/>
+          </div>
+          <div style="flex:1;min-width:200px;">
+            <label>Eliminatorias — cierre global</label>
+            <input type="datetime-local" id="cierre-global-elim" onchange="saveCierreGlobal()"/>
+          </div>
+        </div>
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="ocultar-apuestas" onchange="saveConfigGeneral()" style="width:16px;height:16px;"/>
+            <span style="font-size:13px;font-weight:500;">Ocultar apuestas ajenas hasta que cierre la fase</span>
+          </label>
+        </div>
+      </div>
+    </div>
     <div id="admin-panel-puntos" style="display:none;">
       <div class="card">
         <div class="card-title">Configurar sistema de puntos</div>
@@ -398,7 +450,7 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
 // ============================================================
 // CONSTANTES
 // ============================================================
-const ADMIN_EMAIL = "lopetego@gmail.com"; // cambia por tu correo
+const ADMIN_EMAIL = "fabio@admin.com"; // cambia por tu correo
 const API_KEY_FOOTBALL = "104200f20feebd5784db790f449e3a00";
 
 const PARTIDOS = [
@@ -496,6 +548,90 @@ const CRITERIOS_DEFAULT = [
   {id:"campeon",         nombre:"Campeón acertado",  desc:"Acertó el campeón",      icon:"🏆",pts:5,fijo:true},
 ];
 let criterios = JSON.parse(localStorage.getItem("polla_criterios")||"null") || CRITERIOS_DEFAULT.map(c=>({...c}));
+
+// CONFIG DE PARTIDOS (guardado en Firestore)
+let configPartidos = {}; // { partidoId: { cierreISO, tarjetas, esquinas } }
+let configGlobal   = {}; // { cierreGrupos, cierreElim, ocultarApuestas }
+
+function estaAbierto(partidoId, tipo) {
+  const cfg = configPartidos[partidoId];
+  const ahora = new Date();
+  // Cierre individual del partido
+  if (cfg && cfg.cierreISO) return new Date(cfg.cierreISO) > ahora;
+  // Cierre global por tipo
+  const cierreGlobal = tipo === 'grupo' ? configGlobal.cierreGrupos : configGlobal.cierreElim;
+  if (cierreGlobal) return new Date(cierreGlobal) > ahora;
+  return true; // sin cierre configurado = abierto
+}
+
+function tiempoRestante(partidoId, tipo) {
+  const cfg = configPartidos[partidoId];
+  const ahora = new Date();
+  let cierre = null;
+  if (cfg && cfg.cierreISO) cierre = new Date(cfg.cierreISO);
+  else {
+    const cg = tipo === 'grupo' ? configGlobal.cierreGrupos : configGlobal.cierreElim;
+    if (cg) cierre = new Date(cg);
+  }
+  if (!cierre) return null;
+  const diff = cierre - ahora;
+  if (diff <= 0) return 'cerrado';
+  const h = Math.floor(diff/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  if (h > 48) return Math.floor(h/24) + ' días';
+  if (h > 0) return h + 'h ' + m + 'm';
+  return m + ' min';
+}
+
+async function cargarConfigPartidos() {
+  try {
+    const snap = await db.collection("config").doc("partidos").get();
+    if (snap.exists) configPartidos = snap.data() || {};
+    const snap2 = await db.collection("config").doc("global").get();
+    if (snap2.exists) {
+      configGlobal = snap2.data() || {};
+      // Sync UI
+      const cg = document.getElementById('cierre-global-grupos');
+      const ce = document.getElementById('cierre-global-elim');
+      const oa = document.getElementById('ocultar-apuestas');
+      if (cg && configGlobal.cierreGrupos) cg.value = configGlobal.cierreGrupos;
+      if (ce && configGlobal.cierreElim)   ce.value = configGlobal.cierreElim;
+      if (oa) oa.checked = !!configGlobal.ocultarApuestas;
+    }
+  } catch(e) { console.error('Error cargando config:', e); }
+}
+
+async function saveCierreGlobal() {
+  const cg = document.getElementById('cierre-global-grupos')?.value || '';
+  const ce = document.getElementById('cierre-global-elim')?.value   || '';
+  configGlobal.cierreGrupos = cg;
+  configGlobal.cierreElim   = ce;
+  await db.collection("config").doc("global").set(configGlobal, {merge:true});
+  toast('✓ Cierre global guardado');
+  renderPartidos();
+}
+
+async function saveConfigGeneral() {
+  const oa = document.getElementById('ocultar-apuestas')?.checked || false;
+  configGlobal.ocultarApuestas = oa;
+  await db.collection("config").doc("global").set(configGlobal, {merge:true});
+  toast('✓ Configuración guardada');
+}
+
+async function saveCierrePartido(pid, value) {
+  if (!configPartidos[pid]) configPartidos[pid] = {};
+  configPartidos[pid].cierreISO = value;
+  await db.collection("config").doc("partidos").set(configPartidos, {merge:false});
+  toast('✓ Cierre guardado para ' + pid);
+  renderPartidos();
+}
+
+async function saveDesempate(pid, campo, value) {
+  if (!configPartidos[pid]) configPartidos[pid] = {};
+  configPartidos[pid][campo] = value;
+  await db.collection("config").doc("partidos").set(configPartidos, {merge:false});
+  toast('✓ Desempate actualizado');
+}
 function saveCriterios(){localStorage.setItem("polla_criterios",JSON.stringify(criterios));renderPtsInfo();renderApuestas();renderTabla();}
 function getPts(id){return (criterios.find(c=>c.id===id)||{pts:0}).pts;}
 
@@ -553,7 +689,9 @@ function showAuth() {
 function suscribirApuestas() {
   if (unsubApuestas) unsubApuestas();
   let query = db.collection("apuestas");
-  if (currentUser.rol !== "admin") {
+  // Si ocultarApuestas está activo, usuario normal solo ve las suyas
+  const ocultarParaUser = configGlobal.ocultarApuestas && currentUser.rol !== "admin";
+  if (currentUser.rol !== "admin" || ocultarParaUser) {
     query = query.where("uid", "==", currentUser.uid);
   }
   unsubApuestas = query.onSnapshot(snap => {
@@ -683,7 +821,7 @@ function showTab(id, btn) {
   if(id==="tabla")     renderTabla();
   if(id==="resultados")renderResultados();
   if(id==="partidos")  renderPartidos();
-  if(id==="admin")     { renderUsuarios(); renderCriterios(); }
+  if(id==="admin")     { adminSubTab('usuarios'); }
 }
 
 function updateTipo() {
@@ -710,6 +848,14 @@ function autoFill() {
 // ============================================================
 async function registrar() {
   const tipo = document.getElementById("inp-tipo").value;
+  // Verificar si el partido está abierto
+  if (tipo !== 'campeon') {
+    const pid = document.getElementById("inp-partido").value;
+    if (pid && !estaAbierto(pid, tipo)) {
+      toast("⛔ Las apuestas para este partido están cerradas");
+      return;
+    }
+  }
   const a = {
     numId: nextId++,
     uid:   currentUser.uid,
@@ -777,8 +923,14 @@ function renderPartidos() {
       <div class="fecha-header"><div class="fecha-badge">📅 ${f}</div><div class="fecha-line"></div><div style="font-size:12px;color:var(--muted);white-space:nowrap;">${ps.length} partido${ps.length!==1?"s":""}</div></div>
       <div class="partidos-grid">${ps.map(p => {
         const res = resultados[p.id];
-        return `<div class="partido-card${res?" con-resultado":""}" onclick="preselectPartido('${p.id}')">
-          <div class="p-grupo">${p.grupo}</div>
+        const abierto = estaAbierto(p.id, 'grupo');
+        const tr = tiempoRestante(p.id, 'grupo');
+        let cierreBadge = '';
+        if (tr === 'cerrado') cierreBadge = '<span class="cierre-badge cierre-cerrado">⛔ Cerrado</span>';
+        else if (tr && parseInt(tr) <= 24) cierreBadge = `<span class="cierre-badge cierre-pronto">⏳ Cierra en ${tr}</span>`;
+        else if (tr) cierreBadge = `<span class="cierre-badge cierre-abierto">✅ Abierto</span>`;
+        return `<div class="partido-card${res?" con-resultado":""}${!abierto?" cerrado":""}" onclick="${abierto?"preselectPartido('"+p.id+"')":"void(0)"}">
+          <div class="p-grupo">${p.grupo} ${cierreBadge}</div>
           <div class="p-match">⚽ ${p.local} vs ${p.visitante}</div>
           <div class="p-sede">📍 ${p.sede}</div>
           ${res?`<div class="p-res">${res.local} – ${res.visitante}</div>`:""}
@@ -903,6 +1055,7 @@ async function borrarResultado(pid) {
 async function cargarResultados() {
   const snap = await db.collection("resultados").get();
   snap.forEach(doc => { resultados[doc.id] = doc.data(); });
+  await cargarConfigPartidos();
   renderPartidos(); renderResultados();
 }
 
@@ -974,12 +1127,74 @@ function eliminarCriterio(i){if(!confirm("¿Eliminar?"))return;criterios.splice(
 // ADMIN USUARIOS
 // ============================================================
 function adminSubTab(tab) {
-  document.getElementById("admin-panel-usuarios").style.display = tab==="usuarios"?"block":"none";
-  document.getElementById("admin-panel-puntos").style.display   = tab==="puntos"  ?"block":"none";
-  const base = "flex:1;padding:11px;font-size:13px;font-weight:600;border:none;background:none;cursor:pointer;border-bottom:2px solid ";
-  document.getElementById("asubt-usuarios").style.cssText = base+(tab==="usuarios"?"var(--verde);color:var(--verde);":"transparent;color:var(--muted);");
-  document.getElementById("asubt-puntos").style.cssText   = base+(tab==="puntos"  ?"var(--verde);color:var(--verde);":"transparent;color:var(--muted);");
-  if(tab==="puntos") renderCriterios();
+  ["usuarios","puntos","config"].forEach(t => {
+    document.getElementById("admin-panel-"+t).style.display = tab===t?"block":"none";
+    const base = "flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid ";
+    document.getElementById("asubt-"+t).style.cssText = base+(tab===t?"var(--verde);color:var(--verde);":"transparent;color:var(--muted);");
+  });
+  if(tab==="puntos")  renderCriterios();
+  if(tab==="config")  { renderConfigPartidos(); initConfigFiltros(); loadCierreGlobalUI(); }
+  if(tab==="usuarios")renderUsuarios();
+}
+
+function initConfigFiltros() {
+  const ff = document.getElementById('cfg-fil-fecha');
+  const fg = document.getElementById('cfg-fil-grupo');
+  if (ff && ff.options.length <= 1) {
+    FECHAS.forEach(f=>{const o=document.createElement('option');o.value=f;o.text=f;ff.appendChild(o);});
+    GRUPOS.forEach(g=>{const o=document.createElement('option');o.value=g;o.text=g;fg.appendChild(o);});
+  }
+}
+
+function loadCierreGlobalUI() {
+  const cg = document.getElementById('cierre-global-grupos');
+  const ce = document.getElementById('cierre-global-elim');
+  const oa = document.getElementById('ocultar-apuestas');
+  if (cg && configGlobal.cierreGrupos) cg.value = configGlobal.cierreGrupos;
+  if (ce && configGlobal.cierreElim)   ce.value = configGlobal.cierreElim;
+  if (oa) oa.checked = !!configGlobal.ocultarApuestas;
+}
+
+function renderConfigPartidos() {
+  const fF = document.getElementById('cfg-fil-fecha')?.value || '';
+  const fG = document.getElementById('cfg-fil-grupo')?.value || '';
+  const lista = PARTIDOS.filter(p=>(!fF||p.fecha===fF)&&(!fG||p.grupo===fG));
+  const container = document.getElementById('config-partidos-lista');
+  if (!container) return;
+  const fechas = [...new Set(lista.map(p=>p.fecha))];
+  container.innerHTML = fechas.map(f => {
+    const ps = lista.filter(p=>p.fecha===f);
+    return `<div style="margin-bottom:16px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--verde);margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid var(--border);">📅 ${f}</div>
+      ${ps.map(p => {
+        const cfg = configPartidos[p.id] || {};
+        return `<div class="config-partido-row">
+          <div class="config-partido-info">
+            <div class="config-partido-name">⚽ ${p.local} vs ${p.visitante}</div>
+            <div style="font-size:11px;color:var(--muted);">${p.grupo} · ${p.sede}</div>
+          </div>
+          <div class="config-partido-controls">
+            <div>
+              <label style="font-size:10px;margin-bottom:3px;">Cierre apuestas</label>
+              <input type="datetime-local" value="${cfg.cierreISO||''}"
+                onchange="saveCierrePartido('${p.id}', this.value)"
+                style="font-size:12px;padding:6px 10px;width:auto;"/>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:4px;">
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
+                <input type="checkbox" ${cfg.tarjetas?'checked':''} onchange="saveDesempate('${p.id}','tarjetas',this.checked)" style="width:14px;height:14px;"/>
+                🟨 Tarjetas amarillas
+              </label>
+              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
+                <input type="checkbox" ${cfg.esquinas?'checked':''} onchange="saveDesempate('${p.id}','esquinas',this.checked)" style="width:14px;height:14px;"/>
+                🔄 Tiros de esquina
+              </label>
+            </div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('');
 }
 
 async function renderUsuarios() {
@@ -989,25 +1204,105 @@ async function renderUsuarios() {
     const snap = await db.collection("usuarios").get();
     if (snap.empty) { container.innerHTML='<div class="empty"><div class="empty-ico">👥</div>No hay usuarios</div>'; return; }
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
-    container.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">${users.map(u=>{
-      const ini = u.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
-      const isMe = u.uid===currentUser.uid;
-      return `<div class="user-row">
-        <div style="width:38px;height:38px;border-radius:50%;background:${u.rol==="admin"?"var(--oro)":"var(--verde)"};color:white;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ini}</div>
-        <div style="flex:1;">
-          <div style="font-weight:600;font-size:14px;">${u.nombre}${u.rol==="admin"?'<span class="admin-badge">Admin</span>':""}</div>
-          <div style="font-size:12px;color:var(--muted);">📱 ${u.celular||""} · ${u.email}</div>
-        </div>
-        ${!isMe?`<button class="btn btn-danger btn-sm" onclick="eliminarUsuario('${u.uid}','${u.nombre}')">🗑</button>`:'<span style="font-size:11px;color:var(--muted);">Tú</span>'}
-      </div>`;
-    }).join("")}</div>`;
-  } catch(e) { container.innerHTML='<div class="empty">Error al cargar usuarios</div>'; }
+
+    // Calcular quiénes no han apostado
+    const conApuestas = new Set(apuestas.map(a=>a.uid));
+
+    // Botón de recordatorio masivo
+    const sinApostar = users.filter(u=>!conApuestas.has(u.uid));
+    const btnRecordatorio = sinApostar.length > 0
+      ? `<div style="padding:12px 16px;border-bottom:1px solid var(--border);background:var(--oro-light);">
+          <div style="font-size:13px;font-weight:600;color:var(--oro);margin-bottom:8px;">⚠️ ${sinApostar.length} usuario(s) sin apuestas</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-gold btn-sm" onclick="enviarRecordatorioMasivo()">📲 WhatsApp masivo</button>
+            <button class="btn btn-outline btn-sm" onclick="copiarListaSinApostar()">📋 Copiar lista</button>
+          </div>
+        </div>` : '';
+
+    container.innerHTML = `<div class="card" style="padding:0;overflow:hidden;">
+      ${btnRecordatorio}
+      ${users.map(u=>{
+        const ini = u.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
+        const isMe = u.uid===currentUser.uid;
+        const tieneApuesta = conApuestas.has(u.uid);
+        const isAdmin = u.rol==="admin";
+        return `<div class="user-row">
+          <div style="width:38px;height:38px;border-radius:50%;background:${isAdmin?"var(--oro)":"var(--verde)"};color:white;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${ini}</div>
+          <div style="flex:1;">
+            <div style="font-weight:600;font-size:14px;">${u.nombre}${isAdmin?'<span class="admin-badge">Admin</span>':''}
+              ${!tieneApuesta?'<span style="background:#fee2e2;color:var(--rojo);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:4px;">Sin apuestas</span>':''}
+            </div>
+            <div style="font-size:12px;color:var(--muted);">📱 ${u.celular||"—"} · ${u.email}</div>
+          </div>
+          <div style="display:flex;gap:6px;align-items:center;flex-shrink:0;">
+            ${u.celular&&!tieneApuesta?`<button class="btn btn-gold btn-sm" onclick="enviarWhatsApp('${u.celular}','${u.nombre}')" title="Enviar recordatorio WhatsApp">📲</button>`:''}
+            ${!isMe?`
+              <button class="btn btn-sm ${isAdmin?"btn-outline":"btn-gold"}" onclick="toggleAdmin('${u.uid}','${u.nombre}','${u.rol}')" title="${isAdmin?"Quitar admin":"Hacer admin"}">
+                ${isAdmin?"👤 Quitar admin":"👑 Hacer admin"}
+              </button>
+              <button class="btn btn-danger btn-sm" onclick="eliminarUsuario('${u.uid}','${u.nombre}')" title="Eliminar">🗑</button>
+            `:'<span style="font-size:11px;color:var(--muted);">Tú</span>'}
+          </div>
+        </div>`;
+      }).join("")}
+    </div>`;
+  } catch(e) { container.innerHTML='<div class="empty">Error al cargar usuarios: '+e.message+'</div>'; }
+}
+
+async function toggleAdmin(uid, nombre, rolActual) {
+  const nuevoRol = rolActual === "admin" ? "user" : "admin";
+  const accion   = nuevoRol === "admin" ? "hacer admin" : "quitar rol de admin";
+  if (!confirm(`¿Quieres ${accion} a ${nombre}?`)) return;
+  try {
+    await db.collection("usuarios").doc(uid).update({ rol: nuevoRol });
+    toast(`✓ ${nombre} ahora es ${nuevoRol === "admin" ? "administrador" : "participante"}`);
+    renderUsuarios();
+  } catch(e) { toast("Error: " + e.message); }
 }
 
 async function eliminarUsuario(uid, nombre) {
   if(!confirm(`¿Eliminar a ${nombre}? Sus apuestas se mantendrán.`)) return;
   await db.collection("usuarios").doc(uid).delete();
   toast("Usuario eliminado"); renderUsuarios();
+}
+
+function enviarWhatsApp(celular, nombre) {
+  const msg = encodeURIComponent(
+    `Hola ${nombre} 👋
+
+¡Te recordamos que aún no has registrado tus apuestas en la Polla Mundialista 2026! ⚽🏆
+
+Ingresa aquí: https://lopetego-spec.github.io/Polla-Mundialista/
+
+¡No te quedes por fuera!`
+  );
+  // Limpiar número: quitar espacios, guiones, +57, etc.
+  const num = celular.replace(/[^0-9]/g,'');
+  const numIntl = num.startsWith('57') ? num : '57' + num;
+  window.open(`https://wa.me/${numIntl}?text=${msg}`, '_blank');
+}
+
+async function enviarRecordatorioMasivo() {
+  const snap = await db.collection("usuarios").get();
+  const conApuestas = new Set(apuestas.map(a=>a.uid));
+  const sinApostar = snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>!conApuestas.has(u.uid)&&u.celular);
+  if (!sinApostar.length) { toast("Todos ya tienen apuestas 🎉"); return; }
+  if (!confirm(`¿Enviar recordatorio por WhatsApp a ${sinApostar.length} usuario(s) sin apuestas?`)) return;
+  sinApostar.forEach((u, i) => {
+    setTimeout(() => enviarWhatsApp(u.celular, u.nombre), i * 1500);
+  });
+  toast(`📲 Abriendo WhatsApp para ${sinApostar.length} usuario(s)...`);
+}
+
+async function copiarListaSinApostar() {
+  const snap = await db.collection("usuarios").get();
+  const conApuestas = new Set(apuestas.map(a=>a.uid));
+  const sinApostar = snap.docs.map(d=>({uid:d.id,...d.data()})).filter(u=>!conApuestas.has(u.uid));
+  const lista = sinApostar.map(u=>`• ${u.nombre} (${u.celular||u.email})`).join('
+');
+  navigator.clipboard.writeText(`Usuarios sin apuestas:
+${lista}`);
+  toast(`📋 Lista copiada (${sinApostar.length} usuarios)`);
 }
 
 // ============================================================
