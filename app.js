@@ -1,8 +1,10 @@
 // FIREBASE CONFIG - inicializado en el bloque de scripts del head
 
 // CONSTANTES
-const ADMIN_EMAIL = "fabio@admin.com"; // cambia por tu correo
-const API_KEY_FOOTBALL = "104200f20feebd5784db790f449e3a00";
+const ADMIN_EMAIL        = "lopetego@gmail.com";
+const API_KEY_FOOTBALL   = "8ccb25f8512b4cc51e437eae1b0edca7";
+const EMAILJS_SERVICE_ID = "service_l5i5rnn";
+const EMAILJS_TEMPLATE   = "template_cyfytje";
 
 const PARTIDOS = [
   {id:"A1",grupo:"Grupo A",local:"México",visitante:"Sudáfrica",fecha:"11 Jun",sede:"Ciudad de México"},
@@ -18,7 +20,7 @@ const PARTIDOS = [
   {id:"B5",grupo:"Grupo B",local:"Suiza",visitante:"Canadá",fecha:"24 Jun",sede:"Vancouver"},
   {id:"B6",grupo:"Grupo B",local:"Bosnia y Herz.",visitante:"Qatar",fecha:"24 Jun",sede:"Seattle"},
   {id:"C1",grupo:"Grupo C",local:"Brasil",visitante:"Marruecos",fecha:"13 Jun",sede:"Nueva York"},
-  {id:"C2",grupo:"Grupo C",local:"Haití",visitante:"Escocia",fecha:"13 Jun",sede:"Boston"},
+  {id:"C2",grupo:"Grupo C",local:"Haití",visitante:"Escocia",fecha:"13 Jun",sede:"Filadelfia"},
   {id:"C3",grupo:"Grupo C",local:"Brasil",visitante:"Haití",fecha:"19 Jun",sede:"Filadelfia"},
   {id:"C4",grupo:"Grupo C",local:"Escocia",visitante:"Marruecos",fecha:"19 Jun",sede:"Boston"},
   {id:"C5",grupo:"Grupo C",local:"Escocia",visitante:"Brasil",fecha:"24 Jun",sede:"Miami"},
@@ -38,43 +40,43 @@ const PARTIDOS = [
   {id:"F1",grupo:"Grupo F",local:"Países Bajos",visitante:"Japón",fecha:"14 Jun",sede:"Dallas"},
   {id:"F2",grupo:"Grupo F",local:"Suecia",visitante:"Túnez",fecha:"14 Jun",sede:"Monterrey"},
   {id:"F3",grupo:"Grupo F",local:"Países Bajos",visitante:"Suecia",fecha:"20 Jun",sede:"Houston"},
-  {id:"F4",grupo:"Grupo F",local:"Japón",visitante:"Túnez",fecha:"20 Jun",sede:"Monterrey"},
+  {id:"F4",grupo:"Grupo F",local:"Túnez",visitante:"Japón",fecha:"20 Jun",sede:"Monterrey"},
   {id:"F5",grupo:"Grupo F",local:"Túnez",visitante:"Países Bajos",fecha:"25 Jun",sede:"Kansas City"},
   {id:"F6",grupo:"Grupo F",local:"Japón",visitante:"Suecia",fecha:"25 Jun",sede:"Dallas"},
   {id:"G1",grupo:"Grupo G",local:"Bélgica",visitante:"Egipto",fecha:"15 Jun",sede:"Seattle"},
   {id:"G2",grupo:"Grupo G",local:"Irán",visitante:"Nueva Zelanda",fecha:"15 Jun",sede:"Los Ángeles"},
   {id:"G3",grupo:"Grupo G",local:"Bélgica",visitante:"Irán",fecha:"21 Jun",sede:"Los Ángeles"},
-  {id:"G4",grupo:"Grupo G",local:"Egipto",visitante:"Nueva Zelanda",fecha:"21 Jun",sede:"Vancouver"},
+  {id:"G4",grupo:"Grupo G",local:"Nueva Zelanda",visitante:"Egipto",fecha:"21 Jun",sede:"Vancouver"},
   {id:"G5",grupo:"Grupo G",local:"Nueva Zelanda",visitante:"Bélgica",fecha:"26 Jun",sede:"Vancouver"},
   {id:"G6",grupo:"Grupo G",local:"Egipto",visitante:"Irán",fecha:"26 Jun",sede:"Seattle"},
-  {id:"H1",grupo:"Grupo H",local:"España",visitante:"Cabo Verde",fecha:"15 Jun",sede:"Miami"},
-  {id:"H2",grupo:"Grupo H",local:"Uruguay",visitante:"Arabia Saudita",fecha:"15 Jun",sede:"Kansas City"},
-  {id:"H3",grupo:"Grupo H",local:"España",visitante:"Uruguay",fecha:"21 Jun",sede:"Dallas"},
-  {id:"H4",grupo:"Grupo H",local:"Cabo Verde",visitante:"Arabia Saudita",fecha:"21 Jun",sede:"Houston"},
-  {id:"H5",grupo:"Grupo H",local:"Arabia Saudita",visitante:"España",fecha:"26 Jun",sede:"Miami"},
-  {id:"H6",grupo:"Grupo H",local:"Cabo Verde",visitante:"Uruguay",fecha:"26 Jun",sede:"Houston"},
-  {id:"I1",grupo:"Grupo I",local:"Francia",visitante:"Senegal",fecha:"16 Jun",sede:"Atlanta"},
-  {id:"I2",grupo:"Grupo I",local:"Noruega",visitante:"Irak",fecha:"16 Jun",sede:"Filadelfia"},
-  {id:"I3",grupo:"Grupo I",local:"Francia",visitante:"Noruega",fecha:"22 Jun",sede:"San Francisco"},
-  {id:"I4",grupo:"Grupo I",local:"Senegal",visitante:"Irak",fecha:"22 Jun",sede:"Atlanta"},
-  {id:"I5",grupo:"Grupo I",local:"Noruega",visitante:"Senegal",fecha:"26 Jun",sede:"Boston"},
-  {id:"I6",grupo:"Grupo I",local:"Irak",visitante:"Francia",fecha:"26 Jun",sede:"Miami"},
-  {id:"J1",grupo:"Grupo J",local:"Argentina",visitante:"Argelia",fecha:"16 Jun",sede:"Dallas"},
-  {id:"J2",grupo:"Grupo J",local:"Austria",visitante:"Jordania",fecha:"16 Jun",sede:"Boston"},
-  {id:"J3",grupo:"Grupo J",local:"Argentina",visitante:"Austria",fecha:"22 Jun",sede:"Los Ángeles"},
-  {id:"J4",grupo:"Grupo J",local:"Argelia",visitante:"Jordania",fecha:"22 Jun",sede:"Dallas"},
-  {id:"J5",grupo:"Grupo J",local:"Argentina",visitante:"Jordania",fecha:"27 Jun",sede:"Miami"},
-  {id:"J6",grupo:"Grupo J",local:"Argelia",visitante:"Austria",fecha:"27 Jun",sede:"Boston"},
-  {id:"K1",grupo:"Grupo K",local:"Portugal",visitante:"Rep. Dem. Congo",fecha:"17 Jun",sede:"Filadelfia"},
-  {id:"K2",grupo:"Grupo K",local:"Colombia",visitante:"Uzbekistán",fecha:"17 Jun",sede:"Seattle"},
+  {id:"H1",grupo:"Grupo H",local:"España",visitante:"Cabo Verde",fecha:"15 Jun",sede:"Atlanta"},
+  {id:"H2",grupo:"Grupo H",local:"Arabia Saudita",visitante:"Uruguay",fecha:"15 Jun",sede:"Miami"},
+  {id:"H3",grupo:"Grupo H",local:"España",visitante:"Arabia Saudita",fecha:"21 Jun",sede:"Atlanta"},
+  {id:"H4",grupo:"Grupo H",local:"Uruguay",visitante:"Cabo Verde",fecha:"21 Jun",sede:"Miami"},
+  {id:"H5",grupo:"Grupo H",local:"Uruguay",visitante:"España",fecha:"26 Jun",sede:"Guadalajara"},
+  {id:"H6",grupo:"Grupo H",local:"Cabo Verde",visitante:"Arabia Saudita",fecha:"26 Jun",sede:"Houston"},
+  {id:"I1",grupo:"Grupo I",local:"Francia",visitante:"Senegal",fecha:"16 Jun",sede:"Nueva York"},
+  {id:"I2",grupo:"Grupo I",local:"Irak",visitante:"Noruega",fecha:"16 Jun",sede:"Boston"},
+  {id:"I3",grupo:"Grupo I",local:"Francia",visitante:"Irak",fecha:"22 Jun",sede:"Filadelfia"},
+  {id:"I4",grupo:"Grupo I",local:"Noruega",visitante:"Senegal",fecha:"22 Jun",sede:"Nueva York"},
+  {id:"I5",grupo:"Grupo I",local:"Senegal",visitante:"Irak",fecha:"26 Jun",sede:"Toronto"},
+  {id:"I6",grupo:"Grupo I",local:"Noruega",visitante:"Francia",fecha:"26 Jun",sede:"Miami"},
+  {id:"J1",grupo:"Grupo J",local:"Argentina",visitante:"Argelia",fecha:"16 Jun",sede:"Kansas City"},
+  {id:"J2",grupo:"Grupo J",local:"Austria",visitante:"Jordania",fecha:"16 Jun",sede:"San Francisco"},
+  {id:"J3",grupo:"Grupo J",local:"Argentina",visitante:"Austria",fecha:"22 Jun",sede:"Dallas"},
+  {id:"J4",grupo:"Grupo J",local:"Jordania",visitante:"Argelia",fecha:"22 Jun",sede:"San Francisco"},
+  {id:"J5",grupo:"Grupo J",local:"Jordania",visitante:"Argentina",fecha:"27 Jun",sede:"Dallas"},
+  {id:"J6",grupo:"Grupo J",local:"Argelia",visitante:"Austria",fecha:"27 Jun",sede:"Kansas City"},
+  {id:"K1",grupo:"Grupo K",local:"Portugal",visitante:"Rep. Dem. Congo",fecha:"17 Jun",sede:"Houston"},
+  {id:"K2",grupo:"Grupo K",local:"Uzbekistán",visitante:"Colombia",fecha:"17 Jun",sede:"Ciudad de México"},
   {id:"K3",grupo:"Grupo K",local:"Portugal",visitante:"Uzbekistán",fecha:"23 Jun",sede:"Houston"},
-  {id:"K4",grupo:"Grupo K",local:"Colombia",visitante:"Rep. Dem. Congo",fecha:"23 Jun",sede:"Dallas"},
-  {id:"K5",grupo:"Grupo K",local:"Uzbekistán",visitante:"Colombia",fecha:"27 Jun",sede:"Kansas City"},
-  {id:"K6",grupo:"Grupo K",local:"Rep. Dem. Congo",visitante:"Portugal",fecha:"27 Jun",sede:"Atlanta"},
-  {id:"L1",grupo:"Grupo L",local:"Inglaterra",visitante:"Croacia",fecha:"17 Jun",sede:"Nueva York"},
-  {id:"L2",grupo:"Grupo L",local:"Ghana",visitante:"Panamá",fecha:"17 Jun",sede:"Kansas City"},
-  {id:"L3",grupo:"Grupo L",local:"Inglaterra",visitante:"Ghana",fecha:"23 Jun",sede:"San Francisco"},
-  {id:"L4",grupo:"Grupo L",local:"Croacia",visitante:"Panamá",fecha:"23 Jun",sede:"Filadelfia"},
+  {id:"K4",grupo:"Grupo K",local:"Colombia",visitante:"Rep. Dem. Congo",fecha:"23 Jun",sede:"Guadalajara"},
+  {id:"K5",grupo:"Grupo K",local:"Colombia",visitante:"Portugal",fecha:"27 Jun",sede:"Miami"},
+  {id:"K6",grupo:"Grupo K",local:"Rep. Dem. Congo",visitante:"Uzbekistán",fecha:"27 Jun",sede:"Atlanta"},
+  {id:"L1",grupo:"Grupo L",local:"Inglaterra",visitante:"Croacia",fecha:"17 Jun",sede:"Dallas"},
+  {id:"L2",grupo:"Grupo L",local:"Ghana",visitante:"Panamá",fecha:"17 Jun",sede:"Toronto"},
+  {id:"L3",grupo:"Grupo L",local:"Inglaterra",visitante:"Ghana",fecha:"23 Jun",sede:"Boston"},
+  {id:"L4",grupo:"Grupo L",local:"Panamá",visitante:"Croacia",fecha:"23 Jun",sede:"Toronto"},
   {id:"L5",grupo:"Grupo L",local:"Croacia",visitante:"Ghana",fecha:"27 Jun",sede:"Filadelfia"},
   {id:"L6",grupo:"Grupo L",local:"Panamá",visitante:"Inglaterra",fecha:"27 Jun",sede:"Nueva York"},
 ];
@@ -139,7 +141,6 @@ async function cargarConfigPartidos() {
     const snap2 = await db.collection("config").doc("global").get();
     if (snap2.exists) {
       configGlobal = snap2.data() || {};
-      // Sync UI
       const cg = document.getElementById('cierre-global-grupos');
       const ce = document.getElementById('cierre-global-elim');
       const oa = document.getElementById('ocultar-apuestas');
@@ -147,6 +148,9 @@ async function cargarConfigPartidos() {
       if (ce && configGlobal.cierreElim)   ce.value = configGlobal.cierreElim;
       if (oa) oa.checked = !!configGlobal.ocultarApuestas;
     }
+    // Re-render config partidos si ya está visible para mostrar campos de desempate
+    const panel = document.getElementById('admin-panel-config');
+    if (panel && panel.style.display !== 'none') renderConfigPartidos();
   } catch(e) { console.error('Error cargando config:', e); }
 }
 
@@ -180,6 +184,13 @@ async function saveDesempate(pid, campo, value) {
   configPartidos[pid][campo] = value;
   await db.collection("config").doc("partidos").set(configPartidos, {merge:false});
   toast('✓ Desempate actualizado');
+}
+
+async function saveDesempateValor(pid, campo, value) {
+  if (!configPartidos[pid]) configPartidos[pid] = {};
+  configPartidos[pid][campo] = parseInt(value) || 0;
+  await db.collection("config").doc("partidos").set(configPartidos, {merge:false});
+  toast('✓ Valor guardado');
 }
 function saveCriterios(){localStorage.setItem("polla_criterios",JSON.stringify(criterios));renderPtsInfo();renderApuestas();renderTabla();}
 function getPts(id){return (criterios.find(c=>c.id===id)||{pts:0}).pts;}
@@ -287,9 +298,15 @@ async function doLogin() {
 }
 
 async function doRegistro() {
+  // Verificar invitacion (excepto admin)
+  const emailVal = document.getElementById("r-email").value.trim();
+  if (emailVal !== ADMIN_EMAIL && !invitacionValida) {
+    showAuthErr("Necesitas un link de invitación válido para registrarte");
+    return;
+  }
   const nom   = document.getElementById("r-nom").value.trim();
   const cel   = document.getElementById("r-cel").value.trim();
-  const email = document.getElementById("r-email").value.trim();
+  const email = emailVal;
   const pass  = document.getElementById("r-pass").value;
   const pass2 = document.getElementById("r-pass2").value;
   if (!nom||!cel||!email||!pass) { showAuthErr("Completa todos los campos"); return; }
@@ -299,16 +316,31 @@ async function doRegistro() {
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const rol  = email === ADMIN_EMAIL ? "admin" : "user";
-    await db.collection("usuarios").doc(cred.user.uid).set({
+    // Guardar perfil en Firestore
+    const perfil = {
       nombre: nom, celular: cel, email: email,
       rol: rol, creado: firebase.firestore.FieldValue.serverTimestamp()
-    });
+    };
+    // Agregar datos de quien invitó si existe
+    if (invitacionData) {
+      perfil.invitadoPor = invitacionData.uid || '';
+      perfil.invitadoPorNombre = invitacionData.nombre || '';
+    }
+    await db.collection("usuarios").doc(cred.user.uid).set(perfil);
+    console.log("Perfil guardado en Firestore:", cred.user.uid);
+    // Marcar invitacion como usada
+    if (invitacionData && invitacionData.token && invitacionData.token !== 'pending') {
+      await marcarInvitacionUsada(invitacionData.token);
+    }
+    await guardarInvitacion(cred.user.uid);
     showAuthOk("✓ Cuenta creada. Bienvenido!");
   } catch(e) {
+    console.error("Error en registro:", e);
     const msgs = {
       "auth/email-already-in-use": "Este correo ya está registrado",
       "auth/invalid-email":        "Correo inválido",
-      "auth/weak-password":        "Contraseña muy débil"
+      "auth/weak-password":        "Contraseña muy débil",
+      "permission-denied":         "Error de permisos. Contacta al administrador."
     };
     showAuthErr(msgs[e.code] || e.message);
   }
@@ -380,6 +412,52 @@ function autoFill() {
   document.getElementById("inp-grupo").value     = p.grupo;
   document.getElementById("lbl-local").textContent = p.local;
   document.getElementById("lbl-visit").textContent = p.visitante;
+  // Mostrar campos de desempate si el admin los configuró
+  renderDesempateApuesta(pid, p.local, p.visitante);
+}
+
+function renderDesempateApuesta(pid, local, visitante) {
+  const cfg = configPartidos[pid] || {};
+  const container = document.getElementById('sec-desempate');
+  if (!container) return;
+  let html = '';
+  if (cfg.tarjetas) {
+    html += `<div style="margin-top:14px;padding:12px 14px;background:var(--oro-light);border:1px solid #f0d89a;border-radius:var(--radius);">
+      <div style="font-size:12px;font-weight:700;color:var(--oro);margin-bottom:10px;">🟨 Desempate — Tarjetas amarillas</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">${local}</div>
+          <input type="number" id="inp-tarjetas-local" min="0" max="20" value="0"
+            style="width:64px;text-align:center;font-size:20px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;">VS</div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">${visitante}</div>
+          <input type="number" id="inp-tarjetas-visit" min="0" max="20" value="0"
+            style="width:64px;text-align:center;font-size:20px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
+        </div>
+      </div>
+    </div>`;
+  }
+  if (cfg.esquinas) {
+    html += `<div style="margin-top:10px;padding:12px 14px;background:#e8eef7;border:1px solid #c5d4e8;border-radius:var(--radius);">
+      <div style="font-size:12px;font-weight:700;color:var(--verde);margin-bottom:10px;">🔄 Desempate — Tiros de esquina</div>
+      <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">${local}</div>
+          <input type="number" id="inp-esquinas-local" min="0" max="30" value="0"
+            style="width:64px;text-align:center;font-size:20px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
+        </div>
+        <div style="font-size:12px;color:var(--muted);font-weight:700;">VS</div>
+        <div style="text-align:center;flex:1;">
+          <div style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:4px;">${visitante}</div>
+          <input type="number" id="inp-esquinas-visit" min="0" max="30" value="0"
+            style="width:64px;text-align:center;font-size:20px;font-weight:700;padding:8px 4px;border:1px solid var(--border);border-radius:8px;font-family:Inter,sans-serif;background:var(--bg);"/>
+        </div>
+      </div>
+    </div>`;
+  }
+  container.innerHTML = html;
 }
 
 // REGISTRAR APUESTA
@@ -417,6 +495,16 @@ async function registrar() {
     if (tipo === "grupo") {
       a.golLocal     = parseInt(document.getElementById("inp-gl").value)||0;
       a.golVisitante = parseInt(document.getElementById("inp-gv").value)||0;
+      // Guardar desempate si aplica
+      const cfgP = configPartidos[pid] || {};
+      if (cfgP.tarjetas) {
+        a.tarjetasLocal    = parseInt(document.getElementById("inp-tarjetas-local")?.value)||0;
+        a.tarjetasVisitante= parseInt(document.getElementById("inp-tarjetas-visit")?.value)||0;
+      }
+      if (cfgP.esquinas) {
+        a.esquinasLocal    = parseInt(document.getElementById("inp-esquinas-local")?.value)||0;
+        a.esquinasVisitante= parseInt(document.getElementById("inp-esquinas-visit")?.value)||0;
+      }
     }
   }
   try {
@@ -429,6 +517,8 @@ async function registrar() {
     document.getElementById("inp-campeon").value  = "";
     document.getElementById("inp-gl").value = 1;
     document.getElementById("inp-gv").value = 0;
+    const secDesemp = document.getElementById('sec-desempate');
+    if (secDesemp) secDesemp.innerHTML = '';
   } catch(e) { toast("❌ Error al guardar: "+e.message); }
 }
 
@@ -585,6 +675,7 @@ async function cargarResultados() {
   const snap = await db.collection("resultados").get();
   snap.forEach(doc => { resultados[doc.id] = doc.data(); });
   await cargarConfigPartidos();
+  await cargarTextos(); // carga textos y slogan
   renderPartidos(); renderResultados();
 }
 
@@ -679,13 +770,15 @@ function eliminarCriterio(i) {
 
 // ADMIN USUARIOS
 function adminSubTab(tab) {
-  ["usuarios","puntos","config"].forEach(t => {
+  ["usuarios","puntos","config","textos"].forEach(t => {
     document.getElementById("admin-panel-"+t).style.display = tab===t?"block":"none";
-    const base = "flex:1;padding:11px;font-size:12px;font-weight:600;border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid ";
-    document.getElementById("asubt-"+t).style.cssText = base+(tab===t?"var(--verde);color:var(--verde);":"transparent;color:var(--muted);");
+    const base = "flex:1;padding:10px 8px;font-size:11px;font-weight:600;border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid ";
+    const el = document.getElementById("asubt-"+t);
+    if(el) el.style.cssText = base+(tab===t?"var(--verde);color:var(--verde);":"transparent;color:var(--muted);");
   });
   if(tab==="puntos")  renderCriterios();
   if(tab==="config")  { renderConfigPartidos(); initConfigFiltros(); loadCierreGlobalUI(); }
+  if(tab==="textos")  renderTextos();
   if(tab==="usuarios")renderUsuarios();
 }
 
@@ -732,15 +825,40 @@ function renderConfigPartidos() {
                 onchange="saveCierrePartido('${p.id}', this.value)"
                 style="font-size:12px;padding:6px 10px;width:auto;"/>
             </div>
-            <div style="display:flex;flex-direction:column;gap:4px;">
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-                <input type="checkbox" ${cfg.tarjetas?'checked':''} onchange="saveDesempate('${p.id}','tarjetas',this.checked)" style="width:14px;height:14px;"/>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;">Desempate</div>
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+                <input type="checkbox" ${cfg.tarjetas?'checked':''} 
+                  onchange="saveDesempate('${p.id}','tarjetas',this.checked);renderConfigPartidos();" 
+                  style="width:14px;height:14px;flex-shrink:0;"/>
                 🟨 Tarjetas amarillas
               </label>
-              <label style="display:flex;align-items:center;gap:5px;cursor:pointer;font-size:12px;">
-                <input type="checkbox" ${cfg.esquinas?'checked':''} onchange="saveDesempate('${p.id}','esquinas',this.checked)" style="width:14px;height:14px;"/>
+              ${cfg.tarjetas ? `<div style="display:flex;align-items:center;gap:6px;margin-left:20px;">
+                <label style="font-size:11px;color:var(--muted);white-space:nowrap;">Local:</label>
+                <input type="number" min="0" max="20" value="${cfg.tarjetasLocal||0}"
+                  onchange="saveDesempateValor('${p.id}','tarjetasLocal',this.value)"
+                  style="width:52px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+                <label style="font-size:11px;color:var(--muted);white-space:nowrap;">Visitante:</label>
+                <input type="number" min="0" max="20" value="${cfg.tarjetasVisitante||0}"
+                  onchange="saveDesempateValor('${p.id}','tarjetasVisitante',this.value)"
+                  style="width:52px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+              </div>` : ''}
+              <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;">
+                <input type="checkbox" ${cfg.esquinas?'checked':''}
+                  onchange="saveDesempate('${p.id}','esquinas',this.checked);renderConfigPartidos();"
+                  style="width:14px;height:14px;flex-shrink:0;"/>
                 🔄 Tiros de esquina
               </label>
+              ${cfg.esquinas ? `<div style="display:flex;align-items:center;gap:6px;margin-left:20px;">
+                <label style="font-size:11px;color:var(--muted);white-space:nowrap;">Local:</label>
+                <input type="number" min="0" max="30" value="${cfg.esquinasLocal||0}"
+                  onchange="saveDesempateValor('${p.id}','esquinasLocal',this.value)"
+                  style="width:52px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+                <label style="font-size:11px;color:var(--muted);white-space:nowrap;">Visitante:</label>
+                <input type="number" min="0" max="30" value="${cfg.esquinasVisitante||0}"
+                  onchange="saveDesempateValor('${p.id}','esquinasVisitante',this.value)"
+                  style="width:52px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+              </div>` : ''}
             </div>
           </div>
         </div>`;
@@ -757,8 +875,9 @@ async function renderUsuarios() {
     if (snap.empty) { container.innerHTML='<div class="empty"><div class="empty-ico">👥</div>No hay usuarios</div>'; return; }
     const users = snap.docs.map(d=>({uid:d.id,...d.data()}));
 
-    // Calcular quiénes no han apostado
-    const conApuestas = new Set(apuestas.map(a=>a.uid));
+    // Cargar TODAS las apuestas para calcular quiénes han apostado
+    const snapAp = await db.collection("apuestas").get();
+    const conApuestas = new Set(snapAp.docs.map(d=>d.data().uid));
 
     // Botón de recordatorio masivo
     const sinApostar = users.filter(u=>!conApuestas.has(u.uid));
@@ -799,6 +918,8 @@ async function renderUsuarios() {
       }).join("")}
     </div>`;
   } catch(e) { container.innerHTML='<div class="empty">Error al cargar usuarios: '+e.message+'</div>'; }
+  // Load invitations
+  renderLinksInvitacion();
 }
 
 async function toggleAdmin(uid, nombre, rolActual) {
@@ -1009,39 +1130,34 @@ function mostrarPreviewCargue(usuarios) {
         <label style="display:block;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:5px;text-transform:uppercase;">Contraseña temporal para todos</label>
         <input type="text" id="cargue-pass-temp" value="Polla2026" style="width:200px;padding:8px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;"/>
       </div>
+      <div style="background:var(--verde-light);border:1px solid #a3d9b8;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--verde);">
+        ✉️ Se enviar&aacute; una invitaci&oacute;n por correo a cada persona con su link personal &uacute;nico.
+      </div>
       <button class="btn btn-primary" onclick="ejecutarCargue(${JSON.stringify(usuarios).replace(/"/g,'&quot;')})" style="width:auto;padding:10px 20px;">
-        ⬆ Crear ${usuarios.length} usuario(s)
+        &#9993; Enviar ${usuarios.length} invitaci&oacute;n(es)
       </button>
     </div>`;
 }
 
 async function ejecutarCargue(usuarios) {
-  const passTemp = document.getElementById('cargue-pass-temp')?.value || 'Polla2026';
   const btn = event.target;
   btn.disabled = true;
-  btn.textContent = 'Creando usuarios...';
   let ok = 0, err = 0;
+
+  btn.textContent = 'Enviando invitaciones...';
   for (const u of usuarios) {
     try {
-      const cred = await auth.createUserWithEmailAndPassword(u.correo, passTemp);
-      await db.collection('usuarios').doc(cred.user.uid).set({
-        nombre:  u.nombre || u.correo.split('@')[0],
-        celular: u.celular || '',
-        email:   u.correo,
-        rol:     'user',
-        passTemp: true,
-        creado:  firebase.firestore.FieldValue.serverTimestamp()
-      });
-      await firebase.auth().signOut();
-      // Re-login as admin
+      await generarLinkInvitacion(u.correo, u.nombre);
       ok++;
     } catch(e) {
-      console.error('Error creando ' + u.correo + ':', e.message);
+      console.error('Error invitando ' + u.correo + ':', e.message);
       err++;
     }
+    btn.textContent = 'Enviando... ' + ok + '/' + usuarios.length;
   }
-  // Re-login admin
-  toast(`✓ ${ok} usuario(s) creado(s)${err?' · '+err+' errores':''}`);
+
+  toast('\u2713 ' + ok + ' invitaci\u00F3n(es) enviada(s)' + (err ? ' \u00B7 ' + err + ' errores' : ''));
+  btn.disabled = false;
   cerrarCargueUsuarios();
   renderUsuarios();
 }
@@ -1049,52 +1165,29 @@ async function ejecutarCargue(usuarios) {
 // ============================================================
 // INVITACIONES
 // ============================================================
-function generarLinkInvitacion() {
+function generarLinkInvitacionSimple() {
+  // Simple version for modal preview (async version is generarLinkInvitacion)
   const base = window.location.origin + window.location.pathname;
-  const ref   = btoa(currentUser.uid + '|' + currentUser.nombre);
-  const link  = base + '?ref=' + ref;
-  navigator.clipboard.writeText(link);
-  toast('📋 Link copiado: compártelo con tu familiar');
-  return link;
+  const ref   = btoa(currentUser.uid + '|' + currentUser.nombre + '|pending');
+  return base + '?ref=' + ref;
 }
 
 function abrirModalInvitar() {
   document.getElementById('modal-invitar').style.display = 'flex';
-  // Show personal link
-  const link = generarLinkInvitacion().replace(/&/g,'&amp;');
+  // Clear fields
+  ['invitar-nombre','invitar-email','invitar-tel'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
   const container = document.getElementById('invitar-link-preview');
-  if (container) container.innerHTML = `
-    <div style="background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;word-break:break-all;color:var(--verde);margin-bottom:12px;">
-      ${link}
-    </div>`;
+  if (container) container.innerHTML = '';
 }
 
 function cerrarModalInvitar() {
   document.getElementById('modal-invitar').style.display = 'none';
 }
 
-async function enviarInvitacionCorreo() {
-  const correo = document.getElementById('invitar-correo').value.trim();
-  if (!correo || !correo.includes('@')) { toast('Ingresa un correo válido'); return; }
-  const link = generarLinkInvitacion();
-  const msg = encodeURIComponent(
-    'Hola! Te invito a participar en la Polla Mundialista 2026.\n\n' +
-    'Registrate aqui: ' + link + '\n\n' +
-    'Te invita: ' + currentUser.nombre
-  );
-  // Open WhatsApp with the invitation
-  const tel = document.getElementById('invitar-tel').value.trim();
-  if (tel) {
-    const num = tel.replace(/[^0-9]/g,'');
-    const numIntl = num.startsWith('57') ? num : '57' + num;
-    window.open('https://wa.me/' + numIntl + '?text=' + msg, '_blank');
-  } else {
-    // Copy link
-    navigator.clipboard.writeText(link);
-    toast('Link de invitacion copiado para ' + correo);
-  }
-  cerrarModalInvitar();
-}
+// enviarInvitacionCorreo replaced by enviarInvitacionEmail/WA
 
 // Leer ref de invitacion al cargar
 function leerRefInvitacion() {
@@ -1131,9 +1224,444 @@ function descargarPlantilla() {
   toast('Plantilla descargada');
 }
 
+
+// ============================================================
+// SLOGAN EDITABLE
+// ============================================================
+async function cargarSlogan() {
+  try {
+    const snap = await db.collection('config').doc('global').get();
+    if (snap.exists && snap.data().slogan) {
+      const slogan = snap.data().slogan;
+      const els = ['header-slogan', 'auth-slogan'];
+      els.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = slogan;
+      });
+      const inp = document.getElementById('inp-slogan');
+      if (inp) inp.value = slogan;
+    }
+  } catch(e) { console.error('Error cargando slogan:', e); }
+}
+
+async function guardarSlogan() {
+  const slogan = document.getElementById('inp-slogan')?.value.trim();
+  if (!slogan) { toast('Escribe un slogan'); return; }
+  await db.collection('config').doc('global').set({ slogan }, { merge: true });
+  // Update UI
+  ['header-slogan', 'auth-slogan'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = slogan;
+  });
+  toast('✓ Slogan actualizado');
+}
+
+
+// ============================================================
+// CONTROL DE INVITACIONES
+// ============================================================
+let invitacionValida = false;
+let invitacionData  = null; // { uid, nombre, token }
+
+async function verificarInvitacion() {
+  const params = new URLSearchParams(window.location.search);
+  const ref    = params.get('ref');
+  const tab    = document.getElementById('tab-reg-btn');
+  const form   = document.getElementById('form-registro');
+  const bloq   = document.getElementById('registro-bloqueado');
+
+  if (!ref) {
+    // Sin link — bloquear registro
+    invitacionValida = false;
+    if (tab)  tab.style.display = 'none';
+    if (form) form.style.display = 'none';
+    if (bloq) bloq.style.display = 'block';
+    return;
+  }
+
+  try {
+    const decoded = atob(ref);
+    const parts   = decoded.split('|');
+    // Format: uid|nombre|token
+    if (parts.length >= 2) {
+      const token = parts[2] || '';
+      // Verify token exists in Firestore
+      if (token) {
+        const snap = await db.collection('invitaciones').doc(token).get();
+        if (!snap.exists || snap.data().usado) {
+          invitacionValida = false;
+          if (tab)  tab.style.display = 'none';
+          if (bloq) bloq.style.display = 'block';
+          bloq.innerHTML = '<div style="text-align:center;padding:16px;"><div style="font-size:32px;margin-bottom:8px;">⛔</div><div style="font-size:14px;font-weight:600;color:var(--rojo);">Link inválido o ya usado</div><div style="font-size:13px;color:var(--muted);margin-top:6px;">Solicita un nuevo link al administrador</div></div>';
+          return;
+        }
+      }
+      invitacionValida = true;
+      invitacionData   = { uid: parts[0], nombre: parts[1], token };
+      if (tab)  { tab.style.display = ''; tab.click(); }
+      if (bloq) bloq.style.display = 'none';
+      // Pre-fill nombre if available from URL
+    }
+  } catch(e) {
+    invitacionValida = false;
+    if (tab)  tab.style.display = 'none';
+  }
+}
+
+async function marcarInvitacionUsada(token) {
+  if (!token) return;
+  try {
+    await db.collection('invitaciones').doc(token).update({ usado: true, usadoEn: firebase.firestore.FieldValue.serverTimestamp() });
+  } catch(e) { console.error('Error marcando invitacion:', e); }
+}
+
+// ============================================================
+// GENERAR LINKS DE INVITACION (ADMIN)
+// ============================================================
+async function generarLinkInvitacion(correoDestino, nombreDestino) {
+  const token  = 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2,8);
+  const base   = window.location.origin + window.location.pathname;
+  const ref    = btoa(currentUser.uid + '|' + currentUser.nombre + '|' + token);
+  const link   = base + '?ref=' + ref;
+
+  // Save token to Firestore
+  await db.collection('invitaciones').doc(token).set({
+    token,
+    creadoPor:        currentUser.uid,
+    creadoPorNombre:  currentUser.nombre,
+    correoDestino:    correoDestino || '',
+    nombreDestino:    nombreDestino || '',
+    usado:            false,
+    creado:           firebase.firestore.FieldValue.serverTimestamp()
+  });
+
+  // Enviar por correo si se proporcionó email
+  if (correoDestino && correoDestino.includes('@')) {
+    const enviado = await enviarCorreoInvitacion(correoDestino, nombreDestino, link);
+    if (enviado) {
+      toast('✉️ Invitación enviada a ' + correoDestino);
+    } else {
+      navigator.clipboard.writeText(link);
+      toast('⚠️ Error enviando correo — link copiado');
+    }
+  } else {
+    navigator.clipboard.writeText(link);
+    toast('📋 Link copiado y guardado');
+  }
+  renderLinksInvitacion();
+  return link;
+}
+
+async function renderLinksInvitacion() {
+  const container = document.getElementById('lista-invitaciones');
+  if (!container) return;
+  container.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">Cargando...</div>';
+  try {
+    const snap = await db.collection('invitaciones').orderBy('creado','desc').limit(20).get();
+    if (snap.empty) {
+      container.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:8px 0;">No hay links generados aún</div>';
+      return;
+    }
+    const base = window.location.origin + window.location.pathname;
+    container.innerHTML = snap.docs.map(doc => {
+      const d    = doc.data();
+      const ref  = btoa((d.creadoPor||'') + '|' + (d.creadoPorNombre||'') + '|' + d.token);
+      const link = base + '?ref=' + ref;
+      return `<div style="padding:10px 0;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:13px;font-weight:600;">${d.creadoPorNombre||'Admin'}
+            <span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;background:${d.usado?'#fee2e2':'#d4edd9'};color:${d.usado?'#c0392b':'#1a6b3c'};">
+              ${d.usado ? '✓ Usado' : '⏳ Pendiente'}
+            </span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${link}</div>
+        </div>
+        <div style="display:flex;gap:6px;flex-shrink:0;">
+          ${!d.usado ? `<button class="btn btn-outline btn-sm" onclick="copiarLink('${link}')">📋 Copiar</button>
+          <button class="btn btn-outline btn-sm" onclick="compartirWhatsAppInv('${link}','${d.creadoPorNombre||''}')">📲 WA</button>` : ''}
+          <button class="btn btn-danger btn-sm" onclick="eliminarInvitacion('${doc.id}')">🗑</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '<div style="font-size:13px;color:var(--rojo);">Error cargando links: ' + e.message + '</div>';
+  }
+}
+
+function copiarLink(link) {
+  navigator.clipboard.writeText(link);
+  toast('📋 Link copiado');
+}
+
+function compartirWhatsAppInv(link, nombre) {
+  const msg = encodeURIComponent(
+    'Hola! Te invitamos a participar en la Polla Mundialista FEES 2026 \u26BD\n\n' +
+    'Reg\u00EDstrate aqu\u00ED con tu link personal:\n' + link + '\n\n' +
+    '\u00A1\u00DAnico e intransferible!'
+  );
+  window.open('https://wa.me/?text=' + msg, '_blank');
+}
+
+async function eliminarInvitacion(id) {
+  if (!confirm('\u00BFEliminar este link?')) return;
+  await db.collection('invitaciones').doc(id).delete();
+  toast('Link eliminado');
+  renderLinksInvitacion();
+}
+
+
+// ============================================================
+// ENVIO DE INVITACION POR CORREO (EmailJS)
+// ============================================================
+async function enviarCorreoInvitacion(correoDestino, nombreDestino, link) {
+  try {
+    await emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE, {
+      nombre:      nombreDestino || correoDestino.split('@')[0],
+      link:        link,
+      invitado_por: currentUser ? currentUser.nombre : 'Administrador',
+      to_email:    correoDestino
+    });
+    return true;
+  } catch(e) {
+    console.error('EmailJS error:', e);
+    return false;
+  }
+}
+
+
+async function enviarInvitacionEmail() {
+  const nombre = document.getElementById('invitar-nombre')?.value.trim() || '';
+  const email  = document.getElementById('invitar-email')?.value.trim()  || '';
+  if (!email || !email.includes('@')) { toast('Ingresa un correo válido'); return; }
+  const btn = event.target; btn.disabled = true; btn.textContent = '⏳ Enviando...';
+  const link = await generarLinkInvitacion(email, nombre);
+  btn.disabled = false; btn.textContent = '✉️ Enviar por correo';
+  cerrarModalInvitar();
+}
+
+async function enviarInvitacionWA() {
+  const nombre = document.getElementById('invitar-nombre')?.value.trim() || '';
+  const email  = document.getElementById('invitar-email')?.value.trim()  || '';
+  const tel    = document.getElementById('invitar-tel')?.value.trim()    || '';
+  if (!tel) { toast('Ingresa el número de celular'); return; }
+  const link = await generarLinkInvitacion(email || '', nombre);
+  const msg = encodeURIComponent(
+    'Hola ' + (nombre || 'amigo') + '! \n\n' +
+    'Te invitamos a participar en la Polla Mundialista FEES 2026 \u26BD\n\n' +
+    'Reg\u00EDstrate con tu link personal (solo para ti):\n' + link + '\n\n' +
+    'Te invita: ' + currentUser.nombre
+  );
+  const num = tel.replace(/[^0-9]/g,'');
+  const numIntl = num.startsWith('57') ? num : '57' + num;
+  window.open('https://wa.me/' + numIntl + '?text=' + msg, '_blank');
+  cerrarModalInvitar();
+}
+
+async function soloGenerarLink() {
+  const nombre = document.getElementById('invitar-nombre')?.value.trim() || '';
+  const email  = document.getElementById('invitar-email')?.value.trim()  || '';
+  await generarLinkInvitacion(email || '', nombre);
+  cerrarModalInvitar();
+}
+
+
+// ============================================================
+// CREAR USUARIO INDIVIDUAL (ADMIN)
+// ============================================================
+function toggleFormUsuario() {
+  const form = document.getElementById('form-nuevo-usuario');
+  if (!form) return;
+  form.style.display = form.style.display === 'none' ? 'block' : 'none';
+  if (form.style.display === 'block') {
+    // Clear fields
+    ['nu-nombre','nu-celular','nu-correo','nu-pass'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el && id !== 'nu-pass') el.value = '';
+    });
+  }
+}
+
+// toggleModoUsuario removed
+
+async function crearUsuarioIndividual() {
+  const nombre  = document.getElementById('nu-nombre')?.value.trim();
+  const celular = document.getElementById('nu-celular')?.value.trim();
+  const correo  = document.getElementById('nu-correo')?.value.trim();
+
+  if (!nombre || !correo) { toast('\u26A0 Nombre y correo son obligatorios'); return; }
+  if (!correo.includes('@')) { toast('\u26A0 Correo inv\u00E1lido'); return; }
+
+  const btn = event.target;
+  btn.disabled = true;
+  btn.textContent = '\u23F3 Enviando invitaci\u00F3n...';
+
+  try {
+    await generarLinkInvitacion(correo, nombre);
+    toast('\u2713 Invitaci\u00F3n enviada a ' + correo);
+    toggleFormUsuario();
+    renderUsuarios();
+  } catch(e) {
+    toast('\u274C Error: ' + e.message);
+  }
+
+  btn.disabled = false;
+  btn.textContent = '\u2713 Confirmar';
+}
+
+
+// ============================================================
+// TEXTOS EDITABLES (admin)
+// ============================================================
+const TEXTOS_DEFAULT = {
+  // Header
+  app_titulo:       'Polla Mundialista FEES 2026',
+  app_subtitulo:    'Estados Unidos · México · Canadá · 11 Jun – 19 Jul',
+  app_slogan:       '¡Demuestra que sabes de fútbol!',
+  // Navegación
+  nav_nueva:        '📝 Nueva apuesta',
+  nav_partidos:     '⚽ Partidos',
+  nav_apuestas:     '📋 Apuestas',
+  nav_resultados:   '🎯 Resultados',
+  nav_tabla:        '🏅 Tabla',
+  nav_admin:        '⚙️ Admin',
+  // Secciones principales
+  sec_nueva_titulo: 'Registrar nueva apuesta',
+  sec_partidos_titulo: 'Fixture — Fase de grupos',
+  sec_resultados_titulo: 'Ingresar resultados reales',
+  sec_tabla_titulo: 'Clasificación',
+  // Tabla stats
+  stat_apuestas:    'Apuestas',
+  stat_participantes: 'Participantes',
+  stat_partidos:    'Partidos cubiertos',
+  // Botones clave
+  btn_registrar:    '✓ Registrar apuesta',
+  btn_sync:         '🔄 Sincronizar API',
+  btn_exportcsv:    '⬇ CSV',
+  btn_exportxlsx:   '⬇ Excel',
+  // Auth
+  auth_login_titulo:    'Ingresar',
+  auth_reg_titulo:      'Registrarse',
+  auth_btn_login:       'Ingresar →',
+  auth_btn_reg:         'Crear cuenta →',
+  // Puntuación info
+  pts_titulo:       'Sistema de puntuación:',
+  // Invitar
+  btn_invitar:      '💌 Invitar',
+};
+
+let textos = {...TEXTOS_DEFAULT};
+
+async function cargarTextos() {
+  try {
+    const snap = await db.collection('config').doc('textos').get();
+    if (snap.exists) {
+      textos = {...TEXTOS_DEFAULT, ...snap.data()};
+    }
+    aplicarTextos();
+  } catch(e) { console.error('Error cargando textos:', e); }
+}
+
+function aplicarTextos() {
+  const map = {
+    // Header
+    'hdr-titulo':        textos.app_titulo,
+    'hdr-subtitulo':     textos.app_subtitulo,
+    'header-slogan':     textos.app_slogan,
+    'auth-titulo':       textos.app_titulo,
+    'auth-slogan':       textos.app_slogan,
+    // Secciones
+    'sec-nueva-titulo':  textos.sec_nueva_titulo,
+    'sec-partidos-titulo': textos.sec_partidos_titulo,
+    'sec-resultados-titulo': textos.sec_resultados_titulo,
+    'sec-tabla-titulo':  textos.sec_tabla_titulo,
+    // Stats
+    'stat-lbl-apuestas': textos.stat_apuestas,
+    'stat-lbl-partic':   textos.stat_participantes,
+    'stat-lbl-partidos': textos.stat_partidos,
+    // Botones
+    'btn-registrar':     textos.btn_registrar,
+    'btn-sync':          textos.btn_sync,
+    'btn-invitar':       textos.btn_invitar,
+    // Auth
+    'tab-login-btn':     textos.auth_login_titulo,
+    'tab-reg-btn':       textos.auth_reg_titulo,
+    'btn-login':         textos.auth_btn_login,
+    'btn-reg':           textos.auth_btn_reg,
+    'pts-info-label':    textos.pts_titulo,
+  };
+  Object.entries(map).forEach(([id, val]) => {
+    const el = document.getElementById(id);
+    if (el && val) el.textContent = val;
+  });
+  // Nav buttons (by data-nav attribute)
+  const navMap = {
+    'nueva': textos.nav_nueva,
+    'partidos': textos.nav_partidos,
+    'apuestas': textos.nav_apuestas,
+    'resultados': textos.nav_resultados,
+    'tabla': textos.nav_tabla,
+    'admin': textos.nav_admin,
+  };
+  document.querySelectorAll('nav button[data-nav]').forEach(btn => {
+    const key = btn.getAttribute('data-nav');
+    if (navMap[key]) btn.textContent = navMap[key];
+  });
+}
+
+async function guardarTextos() {
+  const campos = Object.keys(TEXTOS_DEFAULT);
+  campos.forEach(k => {
+    const el = document.getElementById('txt-' + k);
+    if (el) textos[k] = el.value || TEXTOS_DEFAULT[k];
+  });
+  await db.collection('config').doc('textos').set(textos);
+  aplicarTextos();
+  toast('✓ Textos guardados');
+}
+
+function resetTextos() {
+  if (!confirm('¿Restaurar todos los textos por defecto?')) return;
+  textos = {...TEXTOS_DEFAULT};
+  db.collection('config').doc('textos').set(textos);
+  aplicarTextos();
+  renderTextos();
+  toast('✓ Textos restaurados');
+}
+
+function renderTextos() {
+  const container = document.getElementById('textos-lista');
+  if (!container) return;
+
+  const grupos = [
+    { titulo: '🏷️ Header y título', keys: ['app_titulo','app_subtitulo','app_slogan'] },
+    { titulo: '🗂️ Navegación', keys: ['nav_nueva','nav_partidos','nav_apuestas','nav_resultados','nav_tabla','nav_admin'] },
+    { titulo: '📄 Títulos de secciones', keys: ['sec_nueva_titulo','sec_partidos_titulo','sec_resultados_titulo','sec_tabla_titulo'] },
+    { titulo: '📊 Estadísticas', keys: ['stat_apuestas','stat_participantes','stat_partidos'] },
+    { titulo: '🔘 Botones', keys: ['btn_registrar','btn_sync','btn_invitar','btn_exportcsv','btn_exportxlsx'] },
+    { titulo: '🔐 Autenticación', keys: ['auth_login_titulo','auth_reg_titulo','auth_btn_login','auth_btn_reg'] },
+  ];
+
+  container.innerHTML = grupos.map(g => `
+    <div style="margin-bottom:20px;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:16px;color:var(--verde);margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);">${g.titulo}</div>
+      ${g.keys.map(k => `
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap;">
+          <label style="font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.04em;min-width:160px;flex-shrink:0;">${k.replace(/_/g,' ')}</label>
+          <input type="text" id="txt-${k}" value="${(textos[k]||'').replace(/"/g,'&quot;')}"
+            placeholder="${(TEXTOS_DEFAULT[k]||'').replace(/"/g,'&quot;')}"
+            style="flex:1;min-width:200px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;font-family:Inter,sans-serif;background:var(--bg);"
+            oninput="textos['${k}']=this.value;aplicarTextos();"/>
+          <button onclick="document.getElementById('txt-${k}').value=TEXTOS_DEFAULT['${k}'];textos['${k}']=TEXTOS_DEFAULT['${k}'];aplicarTextos();"
+            style="background:none;border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:11px;cursor:pointer;color:var(--muted);flex-shrink:0;"
+            title="Restablecer">↩</button>
+        </div>`).join('')}
+    </div>`).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   init();
   cargarResultados();
+  verificarInvitacion();
   // Fallback: si onAuthStateChanged no responde en 6s, mostrar login
   setTimeout(() => {
     const overlay = document.getElementById('loading-overlay');
