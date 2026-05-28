@@ -97,8 +97,25 @@ const CRITERIOS_DEFAULT = [
   {id:"ganador_correcto",nombre:"Ganador correcto",  desc:"Acertó quién gana",      icon:"✅",pts:1,fijo:true},
   {id:"empate_correcto", nombre:"Empate acertado",   desc:"Predijo el empate",      icon:"🤝",pts:1,fijo:true},
   {id:"campeon",         nombre:"Campeón acertado",  desc:"Acertó el campeón",      icon:"🏆",pts:5,fijo:true},
+  {id:"subcampeon",      nombre:"Subcampeón acertado",desc:"Acertó el subcampeón",  icon:"🥈",pts:3,fijo:true},
+  {id:"tercer_puesto",   nombre:"3er puesto acertado",desc:"Acertó el tercer puesto",icon:"🥉",pts:2,fijo:true},
 ];
-let criterios = JSON.parse(localStorage.getItem("polla_criterios")||"null") || CRITERIOS_DEFAULT.map(c=>({...c}));
+let criterios = CRITERIOS_DEFAULT.map(c=>({...c}));
+
+async function saveCriterios() {
+  await db.collection('config').doc('criterios').set({ lista: criterios });
+  renderPtsInfo(); renderApuestas(); renderTabla();
+}
+
+async function cargarCriterios() {
+  try {
+    const snap = await db.collection('config').doc('criterios').get();
+    if (snap.exists && snap.data().lista && snap.data().lista.length > 0) {
+      criterios = snap.data().lista;
+    }
+  } catch(e) { console.error('Error cargando criterios:', e); }
+  renderPtsInfo();
+}
 
 // CONFIG DE PARTIDOS (guardado en Firestore)
 let configPartidos = {}; // { partidoId: { cierreISO, tarjetas, esquinas } }
@@ -164,6 +181,14 @@ async function saveCierreGlobal() {
   renderPartidos();
 }
 
+async function toggleWhatsApp() {
+  configGlobal.waDeshabilitado = !configGlobal.waDeshabilitado;
+  await db.collection('config').doc('global').set(configGlobal, {merge:true});
+  const estado = configGlobal.waDeshabilitado ? 'deshabilitado' : 'habilitado';
+  toast('📱 WhatsApp ' + estado);
+  loadCierreGlobalUI();
+}
+
 async function saveConfigGeneral() {
   const oa = document.getElementById('ocultar-apuestas')?.checked || false;
   configGlobal.ocultarApuestas = oa;
@@ -192,7 +217,7 @@ async function saveDesempateValor(pid, campo, value) {
   await db.collection("config").doc("partidos").set(configPartidos, {merge:false});
   toast('✓ Valor guardado');
 }
-function saveCriterios(){localStorage.setItem("polla_criterios",JSON.stringify(criterios));renderPtsInfo();renderApuestas();renderTabla();}
+
 function getPts(id){return (criterios.find(c=>c.id===id)||{pts:0}).pts;}
 
 // AUTH OBSERVER
@@ -218,18 +243,50 @@ auth.onAuthStateChanged(async user => {
   }
 });
 
+let unsubUserProfile = null;
+
 function showApp() {
   document.getElementById("auth-overlay").style.display  = "none";
   document.getElementById("main-header").style.display   = "";
   document.getElementById("main-nav").style.display      = "";
   document.getElementById("main-content").style.display  = "";
+  actualizarHeaderUsuario();
+  renderPtsInfo();
+  suscribirApuestas();
+  // Escuchar cambios de rol en tiempo real
+  if (unsubUserProfile) unsubUserProfile();
+  unsubUserProfile = db.collection("usuarios").doc(currentUser.uid)
+    .onSnapshot(snap => {
+      if (!snap.exists) return;
+      const data = snap.data();
+      const rolAnterior = currentUser.rol;
+      currentUser.rol    = data.rol || "user";
+      currentUser.nombre = data.nombre || currentUser.nombre;
+      actualizarHeaderUsuario();
+      // Si cambió el rol, actualizar navegación y suscripciones
+      if (rolAnterior !== currentUser.rol) {
+        const navAdmin = document.getElementById("nav-admin");
+        if (currentUser.rol === "admin") {
+          navAdmin.style.display = "";
+          toast("👑 Ahora eres administrador");
+        } else {
+          navAdmin.style.display = "none";
+          toast("👤 Tu rol ha cambiado a participante");
+        }
+        // Resuscribir apuestas con nuevos permisos
+        suscribirApuestas();
+      }
+    });
+}
+
+function actualizarHeaderUsuario() {
   const ini = currentUser.nombre.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase();
   document.getElementById("hdr-avatar").textContent  = ini;
   document.getElementById("hdr-nombre").textContent  = currentUser.nombre;
   document.getElementById("hdr-rol").textContent     = currentUser.rol==="admin" ? "👑 Administrador" : "👤 Participante";
-  if (currentUser.rol === "admin") document.getElementById("nav-admin").style.display = "";
-  renderPtsInfo();
-  suscribirApuestas();
+  if (currentUser.rol === "admin") {
+    document.getElementById("nav-admin").style.display = "";
+  }
 }
 
 function showAuth() {
@@ -317,8 +374,10 @@ async function doRegistro() {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const rol  = email === ADMIN_EMAIL ? "admin" : "user";
     // Guardar perfil en Firestore
+    // Si viene de invitación, agregar connotación al nombre
+    const nombreFinal = invitacionData && invitacionData.uid ? nom + ' (invitado)' : nom;
     const perfil = {
-      nombre: nom, celular: cel, email: email,
+      nombre: nombreFinal, celular: cel, email: email,
       rol: rol, creado: firebase.firestore.FieldValue.serverTimestamp()
     };
     // Agregar datos de quien invitó si existe
@@ -362,6 +421,7 @@ async function doReset() {
 
 async function doLogout() {
   if (!confirm("¿Cerrar sesión?")) return;
+  if (unsubUserProfile) { unsubUserProfile(); unsubUserProfile = null; }
   await auth.signOut();
 }
 
@@ -397,10 +457,20 @@ function showTab(id, btn) {
 
 function updateTipo() {
   const t = document.getElementById("inp-tipo").value;
-  document.getElementById("sec-partido").style.display = t==="campeon"?"none":"block";
-  document.getElementById("sec-campeon").style.display = t==="campeon"?"block":"none";
-  document.getElementById("sec-goles").style.display   = t==="grupo"  ?"block":"none";
-  document.getElementById("wrap-grupo").style.display  = t==="campeon"?"none" :"block";
+  const esFinal = t==="campeon"||t==="subcampeon"||t==="tercer_puesto";
+  document.getElementById("sec-partido").style.display = esFinal?"none":"block";
+  document.getElementById("sec-campeon").style.display = esFinal?"block":"none";
+  document.getElementById("sec-goles").style.display   = t==="grupo"?"block":"none";
+  document.getElementById("wrap-grupo").style.display  = esFinal?"none":"block";
+  // Update label in campeon input
+  const lbl = document.getElementById("lbl-campeon");
+  if (lbl) {
+    lbl.textContent = t==="campeon" ? "Equipo campeón" : t==="subcampeon" ? "Equipo subcampeón" : "Equipo tercer puesto";
+  }
+  const inp = document.getElementById("inp-campeon");
+  if (inp) {
+    inp.placeholder = t==="campeon" ? "Ej: Argentina" : t==="subcampeon" ? "Ej: Francia" : "Ej: Brasil";
+  }
 }
 
 function autoFill() {
@@ -479,10 +549,14 @@ async function registrar() {
     ts: new Date().toLocaleString("es-CO"),
     creado: firebase.firestore.FieldValue.serverTimestamp()
   };
-  if (tipo === "campeon") {
+  if (tipo === "campeon" || tipo === "subcampeon" || tipo === "tercer_puesto") {
+    const label = tipo === "campeon" ? "campeón" : tipo === "subcampeon" ? "subcampeón" : "tercer puesto";
     const c = document.getElementById("inp-campeon").value.trim();
-    if (!c) { toast("⚠ Ingresa el equipo campeón"); return; }
-    a.campeon = c;
+    if (!c) { toast("⚠ Ingresa el equipo " + label); return; }
+    a.equipoElegido = c;
+    if (tipo === "campeon")      a.campeon     = c;
+    if (tipo === "subcampeon")   a.subcampeon  = c;
+    if (tipo === "tercer_puesto") a.tercerPuesto = c;
   } else {
     const local     = document.getElementById("inp-local").value.trim();
     const visitante = document.getElementById("inp-visitante").value.trim();
@@ -509,7 +583,7 @@ async function registrar() {
   }
   try {
     await db.collection("apuestas").add(a);
-    toast("✓ Apuesta registrada");
+    toast(textos.toast_apuesta_ok || '✓ Desafío registrado');
     document.getElementById("inp-partido").value  = "";
     document.getElementById("inp-local").value    = "";
     document.getElementById("inp-visitante").value= "";
@@ -524,7 +598,22 @@ async function registrar() {
 
 // PUNTOS
 function calcPuntos(a) {
-  if (a.tipo==="campeon") return 0;
+  // Campeón, subcampeón, tercer puesto — se calculan contra resultados especiales
+  if (a.tipo==="campeon") {
+    const r = resultados["campeon"];
+    if (!r || !a.campeon) return 0;
+    return a.campeon === r.equipo ? getPts("campeon") : 0;
+  }
+  if (a.tipo==="subcampeon") {
+    const r = resultados["subcampeon"];
+    if (!r || !a.subcampeon) return 0;
+    return a.subcampeon === r.equipo ? getPts("subcampeon") : 0;
+  }
+  if (a.tipo==="tercer_puesto") {
+    const r = resultados["tercer_puesto"];
+    if (!r || !a.tercerPuesto) return 0;
+    return a.tercerPuesto === r.equipo ? getPts("tercer_puesto") : 0;
+  }
   if (!a.partidoId || !resultados[a.partidoId]) return 0;
   const r  = resultados[a.partidoId];
   const gl = Number(a.golLocal)||0, gv = Number(a.golVisitante)||0;
@@ -590,13 +679,27 @@ function renderApuestas() {
     const badge = `<span class="badge badge-${a.tipo==="campeon"?"campeon":a.tipo}">${a.tipo==="campeon"?"🏆 Campeón":a.tipo==="grupo"?"Grupos":"Eliminatoria"}</span>`;
     const ptsStr = pts>0 ? `<span class="pts-badge">+${pts} pts</span>` : "";
     let detalle="", score="";
-    if(a.tipo==="campeon") detalle="🏆 "+a.campeon;
+    if(a.tipo==="campeon")       detalle="🏆 Campeón: "+(a.campeon||a.equipoElegido||"");
+    else if(a.tipo==="subcampeon")   detalle="🥈 Subcampeón: "+(a.subcampeon||a.equipoElegido||"");
+    else if(a.tipo==="tercer_puesto")detalle="🥉 3er Puesto: "+(a.tercerPuesto||a.equipoElegido||"");
     else { detalle=a.local+" vs "+a.visitante+(a.grupo?" ("+a.grupo+")":""); if(a.tipo==="grupo") score=a.golLocal+"–"+a.golVisitante; }
+    // Mostrar desempate solo para las propias apuestas
+    const esMia = a.uid === currentUser.uid;
+    let desempateHtml = '';
+    if (esMia && a.tipo==="grupo") {
+      if (a.tarjetasLocal !== undefined) {
+        desempateHtml += `<span style="font-size:11px;background:#fdf3dc;color:#c8972b;padding:2px 7px;border-radius:8px;margin-right:4px;">🟨 ${a.tarjetasLocal}–${a.tarjetasVisitante}</span>`;
+      }
+      if (a.esquinasLocal !== undefined) {
+        desempateHtml += `<span style="font-size:11px;background:#e8eef7;color:var(--verde);padding:2px 7px;border-radius:8px;">🔄 ${a.esquinasLocal}–${a.esquinasVisitante}</span>`;
+      }
+    }
     return `<div class="apuesta-card">
       <div class="a-avatar">${ini}</div>
       <div class="a-info">
         <div class="a-nombre">${a.nombre} ${badge} ${ptsStr}</div>
         <div class="a-detalle">${detalle}</div>
+        ${desempateHtml ? `<div style="margin-top:4px;">${desempateHtml}</div>` : ''}
         <div style="font-size:11px;color:var(--muted);margin-top:2px;">${a.ts}</div>
       </div>
       ${score?`<div class="a-score">${score}</div>`:""}
@@ -618,7 +721,43 @@ function renderResultados() {
   const pIds  = [...new Set(apuestas.filter(a=>a.partidoId).map(a=>a.partidoId))];
   const lista = PARTIDOS.filter(p=>pIds.includes(p.id)||resultados[p.id]);
   const container = document.getElementById("lista-resultados");
-  if (!lista.length) { container.innerHTML='<div class="empty"><div class="empty-ico">⏳</div>Registra apuestas para ver partidos aquí</div>'; return; }
+
+  // Sección especial para campeón, subcampeón y tercer puesto
+  const tieneEspeciales = apuestas.some(a=>['campeon','subcampeon','tercer_puesto'].includes(a.tipo));
+  let especialesHtml = '';
+  if (tieneEspeciales) {
+    const especiales = [
+      {id:'campeon',      label:'Campeón',      icon:'🏆', field:'campeon'},
+      {id:'subcampeon',   label:'Subcampeón',   icon:'🥈', field:'subcampeon'},
+      {id:'tercer_puesto',label:'Tercer puesto', icon:'🥉', field:'tercerPuesto'},
+    ];
+    especialesHtml = `<div class="card" style="margin-bottom:14px;">
+      <div class="card-title" style="margin-bottom:12px;">🏆 Resultados finales del mundial</div>
+      ${especiales.map(e => {
+        const r = resultados[e.id];
+        const n = apuestas.filter(a=>a.tipo===e.id).length;
+        if (!n) return '';
+        if (r) return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:20px;">${e.icon}</span>
+          <div style="flex:1;"><div style="font-weight:600;font-size:14px;">${e.label}</div>
+          <div style="font-size:13px;color:var(--verde);font-weight:600;">${r.equipo}</div>
+          <div style="font-size:11px;color:var(--muted);">${n} apuesta(s)</div></div>
+          <button class="btn btn-outline btn-sm" onclick="borrarResultadoEspecial('${e.id}')">✕</button>
+        </div>`;
+        return `<div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:20px;">${e.icon}</span>
+          <div style="flex:1;font-weight:600;">${e.label}</div>
+          <input type="text" id="res-${e.id}" placeholder="Equipo ganador" list="lista-equipos"
+            style="flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:8px;font-size:13px;"/>
+          <button class="btn btn-primary btn-sm" onclick="guardarResultadoEspecial('${e.id}')">Guardar</button>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }
+
+  if (!lista.length && !especialesHtml) { container.innerHTML='<div class="empty"><div class="empty-ico">⏳</div>Registra apuestas para ver partidos aquí</div>'; return; }
+  container.innerHTML = especialesHtml;
+  if (!lista.length) return;
   const fechas = [...new Set(lista.map(p=>p.fecha))];
   container.innerHTML = fechas.map(f => {
     const ps = lista.filter(p=>p.fecha===f);
@@ -627,10 +766,13 @@ function renderResultados() {
       ${ps.map(p => {
         const r = resultados[p.id];
         const n = apuestas.filter(a=>a.partidoId===p.id).length;
+        const cfg = configPartidos[p.id] || {};
         if(r) return `<div class="res-card">
           <div class="res-match">${p.grupo} · ${p.local} vs ${p.visitante}</div>
           <div class="res-form"><span style="font-weight:600;">${p.local}</span><div class="res-done">${r.local} – ${r.visitante}</div><span style="font-weight:600;">${p.visitante}</span>
           <button class="btn btn-outline btn-sm" onclick="borrarResultado('${p.id}')" style="margin-left:auto;">✕</button></div>
+          ${cfg.tarjetas ? `<div style="font-size:12px;color:var(--muted);margin-top:4px;">🟨 Tarjetas: ${r.tarjetasLocal||0}–${r.tarjetasVisitante||0}</div>` : ''}
+          ${cfg.esquinas ? `<div style="font-size:12px;color:var(--muted);margin-top:2px;">🔄 Esquinas: ${r.esquinasLocal||0}–${r.esquinasVisitante||0}</div>` : ''}
           <div style="font-size:12px;color:var(--muted);margin-top:6px;">${n} apuesta(s)</div></div>`;
         return `<div class="res-card">
           <div class="res-match">${p.grupo} · ${p.local} vs ${p.visitante}</div>
@@ -642,6 +784,18 @@ function renderResultados() {
             <span style="font-weight:600;font-size:13px;">${p.visitante}</span>
             <button class="btn btn-primary btn-sm" onclick="guardarResultado('${p.id}')" style="margin-left:auto;">Guardar</button>
           </div>
+          ${cfg.tarjetas ? `<div style="display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:600;color:var(--muted);">🟨 Tarjetas:</span>
+            <input type="number" id="r-tl-${p.id}" min="0" max="20" value="0" style="width:50px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+            <span style="font-size:12px;color:var(--muted);">vs</span>
+            <input type="number" id="r-tv-${p.id}" min="0" max="20" value="0" style="width:50px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+          </div>` : ''}
+          ${cfg.esquinas ? `<div style="display:flex;align-items:center;gap:8px;margin-top:6px;flex-wrap:wrap;">
+            <span style="font-size:12px;font-weight:600;color:var(--muted);">🔄 Esquinas:</span>
+            <input type="number" id="r-el-${p.id}" min="0" max="30" value="0" style="width:50px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+            <span style="font-size:12px;color:var(--muted);">vs</span>
+            <input type="number" id="r-ev-${p.id}" min="0" max="30" value="0" style="width:50px;text-align:center;padding:4px;font-size:13px;font-weight:600;border:1px solid var(--border);border-radius:6px;"/>
+          </div>` : ''}
           <div style="font-size:12px;color:var(--muted);margin-top:6px;">${n} apuesta(s)</div></div>`;
       }).join("")}</div>`;
   }).join("");
@@ -650,9 +804,20 @@ function renderResultados() {
 async function guardarResultado(pid) {
   const l = parseInt(document.getElementById("r-l-"+pid).value)||0;
   const v = parseInt(document.getElementById("r-v-"+pid).value)||0;
-  resultados[pid] = {local:l, visitante:v};
+  const cfg = configPartidos[pid] || {};
+  const res = {local:l, visitante:v, ts: firebase.firestore.FieldValue.serverTimestamp()};
+  // Guardar tarjetas y esquinas si aplica
+  if (cfg.tarjetas) {
+    res.tarjetasLocal    = parseInt(document.getElementById("r-tl-"+pid)?.value)||0;
+    res.tarjetasVisitante= parseInt(document.getElementById("r-tv-"+pid)?.value)||0;
+  }
+  if (cfg.esquinas) {
+    res.esquinasLocal    = parseInt(document.getElementById("r-el-"+pid)?.value)||0;
+    res.esquinasVisitante= parseInt(document.getElementById("r-ev-"+pid)?.value)||0;
+  }
+  resultados[pid] = res;
   // Guardar en Firestore
-  await db.collection("resultados").doc(pid).set({local:l, visitante:v, ts: firebase.firestore.FieldValue.serverTimestamp()});
+  await db.collection("resultados").doc(pid).set(res);
   // Actualizar puntos
   const afectadas = apuestas.filter(a=>a.partidoId===pid);
   const batch = db.batch();
@@ -675,7 +840,8 @@ async function cargarResultados() {
   const snap = await db.collection("resultados").get();
   snap.forEach(doc => { resultados[doc.id] = doc.data(); });
   await cargarConfigPartidos();
-  await cargarTextos(); // carga textos y slogan
+  await cargarTextos();
+  await cargarCriterios();
   renderPartidos(); renderResultados();
 }
 
@@ -689,16 +855,30 @@ function renderTabla() {
   if (!personas.length) { container.innerHTML='<div class="empty" style="padding:24px">Sin participantes aún</div>'; return; }
   const ranking = personas.map(p => {
     const bets = apuestas.filter(a=>a.nombre===p);
-    return {nombre:p, pts:bets.reduce((s,a)=>s+calcPuntos(a),0), count:bets.length, ini:p.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()};
+    const fases = calcPuntosPorFase(bets);
+    const total = bets.reduce((s,a)=>s+calcPuntos(a),0);
+    return {nombre:p, pts:total, count:bets.length, fases, ini:p.split(" ").map(w=>w[0]).join("").slice(0,2).toUpperCase()};
   }).sort((a,b)=>b.pts-a.pts||b.count-a.count);
   const colors = ["var(--oro)","#adb5bd","#cd7f32"];
-  container.innerHTML = ranking.map((r,i) => `
-    <div class="rank-row">
+  container.innerHTML = ranking.map((r,i) => {
+    const faseBadges = Object.entries(r.fases)
+      .filter(([,v])=>v>0)
+      .map(([k,v])=>{
+        const labels = {grupos:'Grupos',octavos:'Octavos',cuartos:'Cuartos',semis:'Semis',final:'Final',campeon:'Campeón'};
+        const icons  = {grupos:'⚽',octavos:'🔁',cuartos:'🏅',semis:'🌟',final:'🏆',campeon:'👑'};
+        return `<span style="font-size:10px;background:var(--verde-light);color:var(--verde);padding:2px 7px;border-radius:8px;margin-right:3px;">${icons[k]||''} ${labels[k]||k}: <strong>${v}</strong></span>`;
+      }).join('');
+    return `<div class="rank-row" style="flex-wrap:wrap;">
       <div class="rank-pos${i<3?" top":""}">${i+1}</div>
       <div style="width:38px;height:38px;border-radius:50%;background:${colors[i]||"var(--verde)"};color:white;font-weight:700;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;">${r.ini}</div>
-      <div class="rank-name">${i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ":""}${r.nombre}<div class="rank-sub">${r.count} apuesta${r.count!==1?"s":""}</div></div>
+      <div class="rank-name" style="flex:1;">
+        ${i===0?"🥇 ":i===1?"🥈 ":i===2?"🥉 ":""}${r.nombre}
+        <div class="rank-sub">${r.count} apuesta${r.count!==1?"s":""}</div>
+        ${faseBadges ? `<div style="margin-top:5px;flex-wrap:wrap;display:flex;gap:3px;">${faseBadges}</div>` : ''}
+      </div>
       <div><div class="rank-pts">${r.pts}</div><div class="pts-lbl">puntos</div></div>
-    </div>`).join("");
+    </div>`;
+  }).join("");
 }
 
 // PUNTUACIÓN CONFIGURABLE
@@ -746,25 +926,26 @@ function renderCriterios() {
       <div style="font-size:11px;font-weight:600;color:var(--muted);text-transform:uppercase;">${cr.nombre}</div>
     </div>`).join("")}</div>`;
 }
-function agregarCriterio() {
+async function agregarCriterio() {
   const nombre = document.getElementById("new-crit-nombre").value.trim();
   const pts    = parseInt(document.getElementById("new-crit-pts").value)||1;
   if(!nombre){toast("⚠ Escribe el nombre");return;}
   criterios.push({id:"custom_"+Date.now(),nombre,desc:"Criterio personalizado",icon:"⭐",pts,fijo:false});
-  saveCriterios();renderCriterios();
+  await saveCriterios();
+  renderCriterios();
   document.getElementById("new-crit-nombre").value="";
   document.getElementById("new-crit-pts").value="2";
   toast("✓ Criterio agregado");
 }
-function eliminarCriterio(i) {
+async function eliminarCriterio(i) {
   const cr = criterios[i];
   if (cr.fijo) {
     if (!confirm('Restablecer "' + cr.nombre + '" a los valores por defecto?')) return;
     const def = CRITERIOS_DEFAULT.find(d=>d.id===cr.id);
-    if (def) { criterios[i] = {...def}; saveCriterios(); renderCriterios(); toast('Criterio restablecido'); }
+    if (def) { criterios[i] = {...def}; await saveCriterios(); renderCriterios(); toast('Criterio restablecido'); }
   } else {
     if (!confirm('Eliminar el criterio "' + cr.nombre + '"?')) return;
-    criterios.splice(i, 1); saveCriterios(); renderCriterios(); toast('Criterio eliminado');
+    criterios.splice(i, 1); await saveCriterios(); renderCriterios(); toast('Criterio eliminado');
   }
 }
 
@@ -795,9 +976,14 @@ function loadCierreGlobalUI() {
   const cg = document.getElementById('cierre-global-grupos');
   const ce = document.getElementById('cierre-global-elim');
   const oa = document.getElementById('ocultar-apuestas');
+  const wa = document.getElementById('toggle-wa');
   if (cg && configGlobal.cierreGrupos) cg.value = configGlobal.cierreGrupos;
   if (ce && configGlobal.cierreElim)   ce.value = configGlobal.cierreElim;
   if (oa) oa.checked = !!configGlobal.ocultarApuestas;
+  if (wa) {
+    wa.checked = !configGlobal.waDeshabilitado;
+    wa.nextElementSibling && (wa.nextElementSibling.textContent = configGlobal.waDeshabilitado ? 'WhatsApp deshabilitado' : 'WhatsApp habilitado');
+  }
 }
 
 function renderConfigPartidos() {
@@ -940,6 +1126,7 @@ async function eliminarUsuario(uid, nombre) {
 }
 
 function enviarWhatsApp(celular, nombre) {
+  if (configGlobal.waDeshabilitado) { toast('📵 WhatsApp deshabilitado por el administrador'); return; }
   const msg = encodeURIComponent(
     'Hola ' + nombre + ' \uD83D\uDC4B\n\n' +
     '\u00A1Te recordamos que a\u00FAn no has registrado tus apuestas en la Polla Mundialista 2026! \u26BD\uD83C\uDFC6\n\n' +
@@ -1319,6 +1506,15 @@ async function marcarInvitacionUsada(token) {
 // GENERAR LINKS DE INVITACION (ADMIN)
 // ============================================================
 async function generarLinkInvitacion(correoDestino, nombreDestino) {
+  // Verificar si el usuario ya invitó (máximo 1 invitación por usuario no-admin)
+  if (currentUser.rol !== 'admin') {
+    const snap = await db.collection('invitaciones')
+      .where('creadoPor', '==', currentUser.uid).limit(1).get();
+    if (!snap.empty) {
+      toast('⚠️ Solo puedes enviar una invitación');
+      return null;
+    }
+  }
   const token  = 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2,8);
   const base   = window.location.origin + window.location.pathname;
   const ref    = btoa(currentUser.uid + '|' + currentUser.nombre + '|' + token);
@@ -1440,6 +1636,7 @@ async function enviarInvitacionEmail() {
 }
 
 async function enviarInvitacionWA() {
+  if (configGlobal.waDeshabilitado) { toast('📵 WhatsApp deshabilitado por el administrador'); return; }
   const nombre = document.getElementById('invitar-nombre')?.value.trim() || '';
   const email  = document.getElementById('invitar-email')?.value.trim()  || '';
   const tel    = document.getElementById('invitar-tel')?.value.trim()    || '';
@@ -1547,6 +1744,7 @@ const TEXTOS_DEFAULT = {
   pts_titulo:       'Sistema de puntuación:',
   // Invitar
   btn_invitar:      '💌 Invitar',
+  toast_apuesta_ok: '✓ Desafío registrado',
 };
 
 let textos = {...TEXTOS_DEFAULT};
@@ -1638,6 +1836,7 @@ function renderTextos() {
     { titulo: '📄 Títulos de secciones', keys: ['sec_nueva_titulo','sec_partidos_titulo','sec_resultados_titulo','sec_tabla_titulo'] },
     { titulo: '📊 Estadísticas', keys: ['stat_apuestas','stat_participantes','stat_partidos'] },
     { titulo: '🔘 Botones', keys: ['btn_registrar','btn_sync','btn_invitar','btn_exportcsv','btn_exportxlsx'] },
+    { titulo: '💬 Mensajes', keys: ['toast_apuesta_ok'] },
     { titulo: '🔐 Autenticación', keys: ['auth_login_titulo','auth_reg_titulo','auth_btn_login','auth_btn_reg'] },
   ];
 
@@ -1656,6 +1855,55 @@ function renderTextos() {
             title="Restablecer">↩</button>
         </div>`).join('')}
     </div>`).join('');
+}
+
+
+// ============================================================
+// PUNTOS POR FASE
+// ============================================================
+function getFase(partidoId) {
+  if (!partidoId) return 'campeon';
+  const grupos = ['A','B','C','D','E','F','G','H','I','J','K','L'];
+  const letra = partidoId[0];
+  if (grupos.includes(letra)) return 'grupos';
+  if (partidoId.startsWith('R16')) return 'octavos';
+  if (partidoId.startsWith('QF'))  return 'cuartos';
+  if (partidoId.startsWith('SF'))  return 'semis';
+  if (partidoId.startsWith('F'))   return 'final';
+  return 'otros';
+}
+
+function calcPuntosPorFase(apuestasPersona) {
+  const fases = { grupos: 0, octavos: 0, cuartos: 0, semis: 0, final: 0, campeon: 0 };
+  apuestasPersona.forEach(a => {
+    const pts = calcPuntos(a);
+    if (pts > 0) {
+      const fase = getFase(a.partidoId);
+      if (fases[fase] !== undefined) fases[fase] += pts;
+    }
+  });
+  return fases;
+}
+
+
+async function guardarResultadoEspecial(tipo) {
+  const equipo = document.getElementById('res-'+tipo)?.value.trim();
+  if (!equipo) { toast('⚠ Ingresa el equipo'); return; }
+  resultados[tipo] = { equipo, ts: firebase.firestore.FieldValue.serverTimestamp() };
+  await db.collection('resultados').doc(tipo).set(resultados[tipo]);
+  // Recalcular puntos
+  const afectadas = apuestas.filter(a=>a.tipo===tipo);
+  const batch = db.batch();
+  afectadas.forEach(a => batch.update(db.collection('apuestas').doc(a.id), {puntos: calcPuntos(a)}));
+  await batch.commit();
+  toast('✓ Resultado guardado: ' + equipo);
+  renderResultados(); renderApuestas(); renderTabla();
+}
+
+async function borrarResultadoEspecial(tipo) {
+  delete resultados[tipo];
+  await db.collection('resultados').doc(tipo).delete();
+  renderResultados(); renderApuestas(); renderTabla();
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -299,6 +299,8 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
             <option value="grupo">Partido fase de grupos</option>
             <option value="eliminatoria">Partido eliminatoria</option>
             <option value="campeon">Campe&oacute;n del mundial</option>
+            <option value="subcampeon">Subcampe&oacute;n del mundial</option>
+            <option value="tercer_puesto">Tercer puesto del mundial</option>
           </select>
         </div>
         <div id="wrap-grupo">
@@ -333,7 +335,7 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
       </div>
       <div id="sec-campeon" style="display:none;">
         <div class="frow"><div>
-          <label>Equipo campe&oacute;n</label>
+          <label id="lbl-campeon">Equipo campe&oacute;n</label>
           <input type="text" id="inp-campeon" placeholder="Ej: Argentina" list="lista-equipos"/>
           <datalist id="lista-equipos"></datalist>
         </div></div>
@@ -482,10 +484,14 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
             <input type="datetime-local" id="cierre-global-elim" onchange="saveCierreGlobal()"/>
           </div>
         </div>
-        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:10px;">
           <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
             <input type="checkbox" id="ocultar-apuestas" onchange="saveConfigGeneral()" style="width:16px;height:16px;"/>
             <span style="font-size:13px;font-weight:500;">Ocultar apuestas ajenas hasta que cierre la fase</span>
+          </label>
+          <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+            <input type="checkbox" id="toggle-wa" checked onchange="toggleWhatsApp()" style="width:16px;height:16px;"/>
+            <span style="font-size:13px;font-weight:500;">WhatsApp habilitado</span>
           </label>
         </div>
       </div>
