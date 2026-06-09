@@ -464,11 +464,14 @@ function showTab(id, btn) {
 
 function updateTipo() {
   const t = document.getElementById("inp-tipo").value;
-  const esFinal = t==="campeon"||t==="subcampeon"||t==="tercer_puesto";
-  document.getElementById("sec-partido").style.display = esFinal?"none":"block";
+  const esFinal = ["campeon","subcampeon","tercer_puesto"].includes(t);
+  const secPartido = document.getElementById("sec-partido");
+  const secGoles   = document.getElementById("sec-goles");
+  const wrapGrupo  = document.getElementById("wrap-grupo");
+  if (secPartido) secPartido.style.display = esFinal?"none":"block";
+  if (secGoles)   secGoles.style.display   = t==="grupo"?"block":"none";
+  if (wrapGrupo)  wrapGrupo.style.display  = esFinal?"none":"block";
   document.getElementById("sec-campeon").style.display = esFinal?"block":"none";
-  document.getElementById("sec-goles").style.display   = t==="grupo"?"block":"none";
-  document.getElementById("wrap-grupo").style.display  = esFinal?"none":"block";
   // Update label in campeon input
   const lbl = document.getElementById("lbl-campeon");
   if (lbl) {
@@ -659,12 +662,7 @@ function renderPartidos() {
 }
 
 function preselectPartido(pid) {
-  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
-  document.querySelectorAll("nav button").forEach(b=>b.classList.remove("active"));
-  document.getElementById("tab-nueva").classList.add("active");
-  document.querySelector("nav button").classList.add("active");
-  document.getElementById("inp-tipo").value = "grupo"; updateTipo();
-  document.getElementById("inp-partido").value = pid; autoFill();
+  abrirApuestaPartido(pid);
 }
 
 // RENDER APUESTAS
@@ -1936,6 +1934,120 @@ async function borrarResultadoEspecial(tipo) {
   delete resultados[tipo];
   await db.collection('resultados').doc(tipo).delete();
   renderResultados(); renderApuestas(); renderTabla();
+}
+
+
+// ============================================================
+// MODAL APUESTA DESDE PARTIDOS (lopetego)
+// ============================================================
+function cerrarModalApuesta() {
+  const m = document.getElementById('modal-apuesta');
+  if (m) m.style.display = 'none';
+}
+
+async function abrirApuestaPartido(pid) {
+  const p = PARTIDOS.find(x => x.id === pid);
+  if (!p) return;
+  const abierto  = estaAbierto(pid, 'grupo');
+  const cfg      = configPartidos[pid] || {};
+  const existing = apuestas.find(a => a.uid === currentUser.uid && a.partidoId === pid);
+  if (!abierto && !existing) { toast('⛔ Las apuestas para este partido están cerradas'); return; }
+
+  let modal = document.getElementById('modal-apuesta');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-apuesta';
+    modal.style.cssText = 'display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;';
+    document.body.appendChild(modal);
+  }
+
+  const gl = existing ? existing.golLocal : 0;
+  const gv = existing ? existing.golVisitante : 0;
+  const tl = existing ? (existing.tarjetasLocal ?? 0) : 0;
+  const tv = existing ? (existing.tarjetasVisitante ?? 0) : 0;
+  const el = existing ? (existing.esquinasLocal ?? 0) : 0;
+  const ev = existing ? (existing.esquinasVisitante ?? 0) : 0;
+
+  modal.innerHTML = `
+    <div style="background:white;border-radius:16px;padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:var(--verde);">${p.grupo} · ${p.fecha}</div>
+          <div style="font-size:13px;color:var(--muted);">📍 ${p.sede}</div>
+        </div>
+        <button onclick="cerrarModalApuesta()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);">✕</button>
+      </div>
+      ${!abierto ? '<div style="background:#fee2e2;color:#c0392b;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px;">⛔ Apuestas cerradas — solo lectura</div>' : ''}
+      ${existing ? '<div style="background:#d4edd9;color:#1a6b3c;padding:8px 12px;border-radius:8px;font-size:13px;font-weight:600;margin-bottom:12px;">✏️ Editando apuesta existente</div>' : ''}
+      <div style="display:grid;grid-template-columns:1fr 48px 1fr;gap:10px;align-items:end;margin-bottom:16px;">
+        <div style="text-align:center;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">${p.local}</div>
+          <input type="number" id="ma-gl" min="0" max="20" value="${gl}" ${!abierto?'disabled':''}
+            style="width:100%;text-align:center;font-size:28px;font-weight:700;padding:10px 4px;border:2px solid var(--border);border-radius:10px;font-family:Inter,sans-serif;background:${abierto?'white':'#f5f5f5'};"/>
+        </div>
+        <div style="text-align:center;padding-bottom:12px;font-size:14px;font-weight:700;color:var(--muted);">VS</div>
+        <div style="text-align:center;">
+          <div style="font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;margin-bottom:6px;">${p.visitante}</div>
+          <input type="number" id="ma-gv" min="0" max="20" value="${gv}" ${!abierto?'disabled':''}
+            style="width:100%;text-align:center;font-size:28px;font-weight:700;padding:10px 4px;border:2px solid var(--border);border-radius:10px;font-family:Inter,sans-serif;background:${abierto?'white':'#f5f5f5'};"/>
+        </div>
+      </div>
+      ${cfg.tarjetas ? `<div style="background:#fdf3dc;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--oro);margin-bottom:8px;">🟨 Tarjetas amarillas</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" id="ma-tl" min="0" max="20" value="${tl}" ${!abierto?'disabled':''} style="flex:1;text-align:center;font-size:20px;font-weight:700;padding:8px;border:1px solid var(--border);border-radius:8px;"/>
+          <span style="color:var(--muted);">–</span>
+          <input type="number" id="ma-tv" min="0" max="20" value="${tv}" ${!abierto?'disabled':''} style="flex:1;text-align:center;font-size:20px;font-weight:700;padding:8px;border:1px solid var(--border);border-radius:8px;"/>
+        </div>
+      </div>` : ''}
+      ${cfg.esquinas ? `<div style="background:#e8eef7;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:12px;font-weight:700;color:var(--verde);margin-bottom:8px;">🔄 Tiros de esquina</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <input type="number" id="ma-el" min="0" max="30" value="${el}" ${!abierto?'disabled':''} style="flex:1;text-align:center;font-size:20px;font-weight:700;padding:8px;border:1px solid var(--border);border-radius:8px;"/>
+          <span style="color:var(--muted);">–</span>
+          <input type="number" id="ma-ev" min="0" max="30" value="${ev}" ${!abierto?'disabled':''} style="flex:1;text-align:center;font-size:20px;font-weight:700;padding:8px;border:1px solid var(--border);border-radius:8px;"/>
+        </div>
+      </div>` : ''}
+      ${abierto ? `<button onclick="guardarApuestaModal('${pid}')"
+        style="width:100%;padding:13px;background:var(--verde);color:white;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;font-family:Inter,sans-serif;margin-top:4px;">
+        ${existing ? '✏️ Actualizar apuesta' : '✓ Registrar apuesta'}
+      </button>` : ''}
+    </div>`;
+  modal.style.display = 'flex';
+}
+
+async function guardarApuestaModal(pid) {
+  const p = PARTIDOS.find(x => x.id === pid);
+  if (!p) return;
+  if (!estaAbierto(pid, 'grupo')) { toast('⛔ Apuestas cerradas'); return; }
+  const cfg = configPartidos[pid] || {};
+  const gl  = parseInt(document.getElementById('ma-gl')?.value) || 0;
+  const gv  = parseInt(document.getElementById('ma-gv')?.value) || 0;
+  const existing = apuestas.find(a => a.uid === currentUser.uid && a.partidoId === pid);
+  const data = { golLocal: gl, golVisitante: gv, ts: new Date().toLocaleString('es-CO') };
+  if (cfg.tarjetas) {
+    data.tarjetasLocal     = parseInt(document.getElementById('ma-tl')?.value) || 0;
+    data.tarjetasVisitante = parseInt(document.getElementById('ma-tv')?.value) || 0;
+  }
+  if (cfg.esquinas) {
+    data.esquinasLocal     = parseInt(document.getElementById('ma-el')?.value) || 0;
+    data.esquinasVisitante = parseInt(document.getElementById('ma-ev')?.value) || 0;
+  }
+  try {
+    if (existing) {
+      await db.collection('apuestas').doc(existing.id).update(data);
+      toast('✓ Apuesta actualizada');
+    } else {
+      await db.collection('apuestas').add({
+        numId: Date.now(), uid: currentUser.uid, nombre: currentUser.nombre,
+        tipo: 'grupo', local: p.local, visitante: p.visitante,
+        partidoId: pid, grupo: p.grupo,
+        creado: firebase.firestore.FieldValue.serverTimestamp(), ...data
+      });
+      toast('✓ Apuesta registrada');
+    }
+    cerrarModalApuesta();
+  } catch(e) { toast('❌ Error: ' + e.message); }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

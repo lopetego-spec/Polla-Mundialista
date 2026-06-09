@@ -318,12 +318,13 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
   <div class="panel active" id="tab-nueva">
     <div class="card">
       <div class="card-title" id="sec-nueva-titulo">Registrar nueva apuesta</div>
+      <div style="background:#d4edd9;border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:13px;color:var(--verde);">
+        &#9917; Para apostar en partidos ve a la pesta&ntilde;a <strong>Partidos</strong> y haz clic en el partido.
+      </div>
       <div class="frow c2">
         <div>
-          <label>Tipo de apuesta</label>
+          <label>Tipo de apuesta especial</label>
           <select id="inp-tipo" onchange="updateTipo()">
-            <option value="grupo">Partido fase de grupos</option>
-            <option value="eliminatoria">Partido eliminatoria</option>
             <option value="campeon">Campe&oacute;n del mundial</option>
             <option value="subcampeon">Subcampe&oacute;n del mundial</option>
             <option value="tercer_puesto">Tercer puesto del mundial</option>
