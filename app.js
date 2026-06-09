@@ -230,11 +230,12 @@ auth.onAuthStateChanged(async user => {
     const snap = await db.collection("usuarios").doc(user.uid).get();
     const perfil = snap.exists ? snap.data() : {};
     currentUser = {
-      uid:    user.uid,
-      email:  user.email,
-      nombre: perfil.nombre || user.email,
-      celular:perfil.celular || "",
-      rol:    perfil.rol || "user"
+      uid:         user.uid,
+      email:       user.email,
+      nombre:      perfil.nombre || user.email,
+      celular:     perfil.celular || "",
+      rol:         perfil.rol || "user",
+      invitadoPor: perfil.invitadoPor || null
     };
     showApp();
   } else {
@@ -252,7 +253,10 @@ function showApp() {
   document.getElementById("main-content").style.display  = "";
   actualizarHeaderUsuario();
   renderPtsInfo();
+  // Cargar config de partidos temprano para que los campos de desempate aparezcan
+  cargarConfigPartidos().then(() => renderPartidos());
   suscribirApuestas();
+
   // Escuchar cambios de rol en tiempo real
   if (unsubUserProfile) unsubUserProfile();
   unsubUserProfile = db.collection("usuarios").doc(currentUser.uid)
@@ -260,9 +264,11 @@ function showApp() {
       if (!snap.exists) return;
       const data = snap.data();
       const rolAnterior = currentUser.rol;
-      currentUser.rol    = data.rol || "user";
-      currentUser.nombre = data.nombre || currentUser.nombre;
+      currentUser.rol         = data.rol || "user";
+      currentUser.nombre      = data.nombre || currentUser.nombre;
+      currentUser.invitadoPor = data.invitadoPor || null;
       actualizarHeaderUsuario();
+
       // Si cambió el rol, actualizar navegación y suscripciones
       if (rolAnterior !== currentUser.rol) {
         const navAdmin = document.getElementById("nav-admin");
@@ -374,8 +380,9 @@ async function doRegistro() {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const rol  = email === ADMIN_EMAIL ? "admin" : "user";
     // Guardar perfil en Firestore
-    // Si viene de invitación, agregar connotación al nombre
-    const nombreFinal = invitacionData && invitacionData.uid ? nom + ' (invitado)' : nom;
+    // Solo agregar (invitado) si viene de invitación personal, no de cargue masivo
+    const esInvitadoReal = invitacionData && invitacionData.uid && !invitacionData.esCargue;
+    const nombreFinal = esInvitadoReal ? nom + ' (invitado)' : nom;
     const perfil = {
       nombre: nombreFinal, celular: cel, email: email,
       rol: rol, creado: firebase.firestore.FieldValue.serverTimestamp()
@@ -1334,7 +1341,24 @@ async function ejecutarCargue(usuarios) {
   btn.textContent = 'Enviando invitaciones...';
   for (const u of usuarios) {
     try {
-      await generarLinkInvitacion(u.correo, u.nombre);
+      // Cargue masivo: generar link SIN marcar como invitado
+      const token  = 'inv_' + Date.now() + '_' + Math.random().toString(36).substr(2,8);
+      const base   = window.location.origin + window.location.pathname;
+      const ref    = btoa(currentUser.uid + '|' + currentUser.nombre + '|' + token);
+      const link   = base + '?ref=' + ref;
+      // Guardar invitacion sin invitadoPor para que no marque como invitado
+      await db.collection('invitaciones').doc(token).set({
+        token,
+        creadoPor:        currentUser.uid,
+        creadoPorNombre:  currentUser.nombre,
+        correoDestino:    u.correo || '',
+        nombreDestino:    u.nombre || '',
+        usado:            false,
+        esCargue:         true,
+        creado:           firebase.firestore.FieldValue.serverTimestamp()
+      });
+      // Enviar correo
+      if (u.correo) await enviarCorreoInvitacion(u.correo, u.nombre, link);
       ok++;
     } catch(e) {
       console.error('Error invitando ' + u.correo + ':', e.message);
@@ -1483,8 +1507,16 @@ async function verificarInvitacion() {
           return;
         }
       }
+      // Cargar flag esCargue de Firestore
+      let esCargue = false;
+      try {
+        if (token) {
+          const invSnap = await db.collection('invitaciones').doc(token).get();
+          if (invSnap.exists) esCargue = invSnap.data().esCargue || false;
+        }
+      } catch(e) {}
       invitacionValida = true;
-      invitacionData   = { uid: parts[0], nombre: parts[1], token };
+      invitacionData   = { uid: parts[0], nombre: parts[1], token, esCargue };
       if (tab)  { tab.style.display = ''; tab.click(); }
       if (bloq) bloq.style.display = 'none';
       // Pre-fill nombre if available from URL

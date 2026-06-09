@@ -195,6 +195,10 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
 @keyframes spin{to{transform:rotate(360deg);}}
 ::-webkit-scrollbar{width:4px;}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px;}
+@media(min-width:768px){
+  .auth-img-panel{display:block !important;}
+  .auth-overlay{flex-direction:row !important;}
+}
 @media(max-width:600px){
   .frow.c2{grid-template-columns:1fr;}
   .stats-grid{grid-template-columns:1fr 1fr;}
@@ -252,6 +256,7 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
       <p style="text-align:center;margin-top:12px;font-size:13px;color:var(--muted);cursor:pointer;" onclick="authTab('login')">&larr; Volver al login</p>
     </div>
   </div>
+  </div>
 </div>
 
 <!-- HEADER -->
@@ -265,9 +270,7 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
     </div>
   </div>
   <div style="display:flex;align-items:center;gap:8px;">
-    <button id="btn-invitar" onclick="abrirModalInvitar()" style="background:rgba(255,255,255,.15);border:none;color:white;padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;" onmouseover="this.style.background='rgba(255,255,255,.25)'" onmouseout="this.style.background='rgba(255,255,255,.15)'">
-      &#128140; Invitar
-    </button>
+
     <div class="user-pill" onclick="doLogout()" title="Cerrar sesi&oacute;n">
       <div class="u-avatar" id="hdr-avatar">?</div>
       <div><div class="u-name" id="hdr-nombre">...</div><div class="u-rol" id="hdr-rol"></div></div>
@@ -572,46 +575,7 @@ input:focus,select:focus{border-color:var(--verde);background:white;}
   </div>
 </div>
 
-<!-- MODAL: INVITAR FAMILIAR -->
-<div id="modal-invitar" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:2000;align-items:center;justify-content:center;padding:16px;">
-  <div style="background:white;border-radius:16px;padding:28px;width:100%;max-width:480px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-      <h2 style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:var(--verde);">&#128140; Invitar familiar</h2>
-      <button onclick="cerrarModalInvitar()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted);">&#10005;</button>
-    </div>
 
-    <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Genera un link &uacute;nico por persona. Solo funciona una vez.</p>
-
-    <div style="margin-bottom:12px;">
-      <label>Nombre del invitado</label>
-      <input type="text" id="invitar-nombre" placeholder="Ej: Juan Pérez" style="margin-top:5px;"/>
-    </div>
-    <div style="margin-bottom:12px;">
-      <label>Correo electr&oacute;nico <span style="color:var(--verde);font-size:11px;">(se env&iacute;a autom&aacute;ticamente)</span></label>
-      <input type="email" id="invitar-email" placeholder="correo@ejemplo.com" style="margin-top:5px;"/>
-    </div>
-    <div style="margin-bottom:16px;">
-      <label>O enviar por WhatsApp</label>
-      <input type="tel" id="invitar-tel" placeholder="Ej: 3001234567" style="margin-top:5px;"/>
-    </div>
-
-    <div id="invitar-link-preview"></div>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-primary" onclick="enviarInvitacionEmail()" style="flex:1;">
-        &#9993; Enviar por correo
-      </button>
-      <button class="btn btn-primary" onclick="enviarInvitacionWA()" style="flex:1;background:#25D366;">
-        &#128242; Enviar por WhatsApp
-      </button>
-    </div>
-    <div style="margin-top:10px;">
-      <button class="btn btn-outline btn-sm" onclick="soloGenerarLink()" style="width:100%;">
-        &#128203; Solo generar y copiar link
-      </button>
-    </div>
-  </div>
-</div>
 
 </body>
 </html>
