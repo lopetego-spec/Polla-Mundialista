@@ -2052,6 +2052,7 @@ async function guardarApuestaModal(pid) {
 
 document.addEventListener('DOMContentLoaded', () => {
   init();
+  updateTipo();
   cargarResultados();
   verificarInvitacion();
   // Fallback: si onAuthStateChanged no responde en 6s, mostrar login
